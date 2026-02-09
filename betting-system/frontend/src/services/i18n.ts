@@ -97,6 +97,16 @@ const zh = {
   noUsers: '暂无数据',
   springGreeting: '马年新春快乐',
   totalCoinsAll: '全员金币总额',
+  pending: '未开始',
+  startTheme: '开始',
+  wineGlassRanking: '酒杯排行',
+  glasses: '杯',
+  themeLibrary: '主题库',
+  total: '合计',
+  prizeTier: '奖金等级',
+  deleteUser: '删除',
+  deleteUserConfirm: '确定删除该用户？该用户的所有押注也会被删除',
+  userDeleted: '用户已删除',
 };
 
 const en: typeof zh = {
@@ -193,6 +203,16 @@ const en: typeof zh = {
   noUsers: 'No data',
   springGreeting: 'Happy Year of the Horse',
   totalCoinsAll: 'Total Coins',
+  pending: 'Pending',
+  startTheme: 'Start',
+  wineGlassRanking: 'Wine Glass Rank',
+  glasses: 'glasses',
+  themeLibrary: 'Library',
+  total: 'Total',
+  prizeTier: 'Prize Tier',
+  deleteUser: 'Delete',
+  deleteUserConfirm: 'Delete this user? All their bets will also be removed.',
+  userDeleted: 'User deleted',
 };
 
 const translations = { zh, en } as const;

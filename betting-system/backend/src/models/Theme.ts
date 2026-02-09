@@ -8,7 +8,7 @@ export interface IOption {
 export interface ITheme extends Document {
   title: string;
   description: string;
-  status: 'open' | 'closed';
+  status: 'pending' | 'open' | 'closed';
   settlementMode: 'admin' | 'random';
   winnerOptionId: Types.ObjectId | null;
   options: IOption[];
@@ -22,7 +22,7 @@ const OptionSchema = new Schema<IOption>({
 const ThemeSchema = new Schema<ITheme>({
   title: { type: String, required: true },
   description: { type: String, default: '' },
-  status: { type: String, enum: ['open', 'closed'], default: 'open' },
+  status: { type: String, enum: ['pending', 'open', 'closed'], default: 'pending' },
   settlementMode: { type: String, enum: ['admin', 'random'], default: 'admin' },
   winnerOptionId: { type: Schema.Types.ObjectId, default: null },
   options: [OptionSchema],

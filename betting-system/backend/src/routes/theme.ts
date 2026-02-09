@@ -3,12 +3,23 @@ import Theme from '../models/Theme';
 import Bet from '../models/Bet';
 import User from '../models/User';
 import { auth, adminOnly, AuthRequest } from '../middleware/auth';
-import { getSettings } from './settings';
+import { getSettings, calcPrizePool } from './settings';
 
 const router = Router();
 
-// GET /api/themes - 获取所有主题
-router.get('/', auth, async (_req: AuthRequest, res: Response) => {
+// GET /api/themes - 获取主题（用户只看open/closed，管理员看全部）
+router.get('/', auth, async (req: AuthRequest, res: Response) => {
+  try {
+    const filter = req.isAdmin ? {} : { status: { $in: ['open', 'closed'] } };
+    const themes = await Theme.find(filter).sort({ createdAt: -1 });
+    return res.json(themes);
+  } catch {
+    return res.status(500).json({ message: '服务器错误' });
+  }
+});
+
+// GET /api/themes/all - 管理员获取全部主题（包括pending）
+router.get('/all', auth, adminOnly, async (_req: AuthRequest, res: Response) => {
   try {
     const themes = await Theme.find().sort({ createdAt: -1 });
     return res.json(themes);
@@ -17,7 +28,7 @@ router.get('/', auth, async (_req: AuthRequest, res: Response) => {
   }
 });
 
-// POST /api/themes - 创建主题（管理员）
+// POST /api/themes - 创建主题（管理员，默认pending状态）
 router.post('/', auth, adminOnly, async (req: AuthRequest, res: Response) => {
   try {
     const { title, description, options, settlementMode } = req.body;
@@ -28,6 +39,7 @@ router.post('/', auth, adminOnly, async (req: AuthRequest, res: Response) => {
       title,
       description: description || '',
       settlementMode: settlementMode || 'admin',
+      status: 'pending',
       options: options.map((name: string) => ({ name })),
     });
     (req as any).io?.emit('themeUpdate');
@@ -37,26 +49,136 @@ router.post('/', auth, adminOnly, async (req: AuthRequest, res: Response) => {
   }
 });
 
-// DELETE /api/themes/:id - 删除主题（管理员）
+// POST /api/themes/:id/start - 开始主题（pending → open）
+router.post('/:id/start', auth, adminOnly, async (req: AuthRequest, res: Response) => {
+  try {
+    const theme = await Theme.findById(req.params.id);
+    if (!theme) return res.status(404).json({ message: '主题不存在' });
+    if (theme.status !== 'pending') return res.status(400).json({ message: '只能开始未开始的主题' });
+
+    theme.status = 'open';
+    await theme.save();
+    (req as any).io?.emit('themeUpdate');
+    return res.json(theme);
+  } catch {
+    return res.status(500).json({ message: '服务器错误' });
+  }
+});
+
+// DELETE /api/themes/:id - 删除主题（管理员，完整回滚所有用户变化）
 router.delete('/:id', auth, adminOnly, async (req: AuthRequest, res: Response) => {
   try {
     const theme = await Theme.findById(req.params.id);
     if (!theme) return res.status(404).json({ message: '主题不存在' });
 
-    // 如果主题还没结算，退还金币押注（酒杯押注无需退还）
+    const bets = await Bet.find({ themeId: theme._id });
+    const coinBets = bets.filter(b => !b.useWineGlass);
+    const wineGlassBets = bets.filter(b => b.useWineGlass);
+
     if (theme.status === 'open') {
-      const bets = await Bet.find({ themeId: theme._id });
+      // 退还金币押注
+      for (const bet of coinBets) {
+        await User.findByIdAndUpdate(bet.userId, { $inc: { coins: bet.amount } });
+      }
+      // 减少酒杯计数
+      for (const bet of wineGlassBets) {
+        await User.findByIdAndUpdate(bet.userId, { $inc: { wineGlasses: -1 } });
+      }
+      // 减少参与轮次
       for (const bet of bets) {
-        if (!bet.useWineGlass) {
-          await User.findByIdAndUpdate(bet.userId, { $inc: { coins: bet.amount } });
+        await User.findByIdAndUpdate(bet.userId, { $inc: { rounds: -1 } });
+      }
+    } else if (theme.status === 'closed') {
+      // 回滚结算：逆向计算结算时给予的奖励
+      const winnerOptionId = theme.winnerOptionId?.toString();
+      const winnerCoinBets = coinBets.filter(b => b.optionId.toString() === winnerOptionId);
+      const loserCoinBets = coinBets.filter(b => b.optionId.toString() !== winnerOptionId);
+
+      const loserPool = loserCoinBets.reduce((sum, b) => sum + b.amount, 0);
+      const winnerTotalBet = winnerCoinBets.reduce((sum, b) => sum + b.amount, 0);
+
+      // 回滚金币赢家的奖励（退还押注+分得的奖池）
+      for (const bet of winnerCoinBets) {
+        const ratio = winnerTotalBet > 0 ? bet.amount / winnerTotalBet : 0;
+        const reward = Math.floor(bet.amount + loserPool * ratio);
+        await User.findByIdAndUpdate(bet.userId, { $inc: { coins: -reward } });
+      }
+
+      // 如果没有金币赢家，结算时退还了输家的押注，需要扣回
+      if (winnerCoinBets.length === 0 && loserCoinBets.length > 0) {
+        for (const bet of loserCoinBets) {
+          await User.findByIdAndUpdate(bet.userId, { $inc: { coins: -bet.amount } });
         }
       }
-      await Bet.deleteMany({ themeId: theme._id });
+
+      // 退还所有金币押注（回到押注前的状态）
+      for (const bet of coinBets) {
+        await User.findByIdAndUpdate(bet.userId, { $inc: { coins: bet.amount } });
+      }
+
+      // 回滚酒杯赢家的5万金币奖励
+      const wineGlassWinners = wineGlassBets.filter(b => b.optionId.toString() === winnerOptionId);
+      for (const bet of wineGlassWinners) {
+        await User.findByIdAndUpdate(bet.userId, { $inc: { coins: -50000 } });
+      }
+
+      // 减少酒杯计数
+      for (const bet of wineGlassBets) {
+        await User.findByIdAndUpdate(bet.userId, { $inc: { wineGlasses: -1 } });
+      }
+
+      // 减少参与轮次
+      for (const bet of bets) {
+        await User.findByIdAndUpdate(bet.userId, { $inc: { rounds: -1 } });
+      }
+
+      // 回滚settledWineGlasses
+      if (wineGlassBets.length > 0) {
+        const settings = await getSettings();
+        settings.settledWineGlasses = Math.max(0, (settings.settledWineGlasses || 0) - wineGlassBets.length);
+        await settings.save();
+      }
     }
 
+    // 删除所有相关押注和主题
+    await Bet.deleteMany({ themeId: theme._id });
     await Theme.findByIdAndDelete(req.params.id);
-    (req as any).io?.emit('themeUpdate');
+
+    // 推送更新
+    const io = (req as any).io;
+    io?.emit('themeUpdate');
+    const settings = await getSettings();
+    const dynamicPrizePool = await calcPrizePool();
+    io?.emit('settingsUpdate', {
+      ...settings.toObject(),
+      totalPrizePool: dynamicPrizePool,
+      currentPool: dynamicPrizePool,
+    });
+
     return res.json({ message: '已删除' });
+  } catch {
+    return res.status(500).json({ message: '服务器错误' });
+  }
+});
+
+// GET /api/themes/:id/wine-glass-stats - 获取主题酒杯统计
+router.get('/:id/wine-glass-stats', auth, adminOnly, async (req: AuthRequest, res: Response) => {
+  try {
+    const bets = await Bet.find({ themeId: req.params.id, useWineGlass: true })
+      .populate('userId', 'name');
+    // 按用户聚合酒杯数
+    const userMap = new Map<string, { name: string; count: number }>();
+    for (const bet of bets) {
+      const u = bet.userId as any;
+      const userId = u._id.toString();
+      if (userMap.has(userId)) {
+        userMap.get(userId)!.count += 1;
+      } else {
+        userMap.set(userId, { name: u.name || '未知', count: 1 });
+      }
+    }
+    const stats = Array.from(userMap.values()).sort((a, b) => b.count - a.count);
+    return res.json({ stats, total: bets.length });
   } catch {
     return res.status(500).json({ message: '服务器错误' });
   }
@@ -67,6 +189,7 @@ async function settleTheme(themeId: string, winnerOptionId: string, io: any) {
   const theme = await Theme.findById(themeId);
   if (!theme) throw new Error('主题不存在');
   if (theme.status === 'closed') throw new Error('该主题已结算');
+  if (theme.status === 'pending') throw new Error('主题尚未开始');
 
   const winnerOption = theme.options.find(o => o._id.toString() === winnerOptionId);
   if (!winnerOption) throw new Error('选项不存在');
@@ -105,7 +228,7 @@ async function settleTheme(themeId: string, winnerOptionId: string, io: any) {
     await User.findByIdAndUpdate(bet.userId, { $inc: { coins: 50000 } });
   }
 
-  // 记录已结算酒杯数（用于计算总奖池：参与人数×40万 + 酒杯数×5万）
+  // 记录已结算酒杯数
   const settings = await getSettings();
   if (wineGlassBets.length > 0) {
     settings.settledWineGlasses = (settings.settledWineGlasses || 0) + wineGlassBets.length;
@@ -118,8 +241,7 @@ async function settleTheme(themeId: string, winnerOptionId: string, io: any) {
   await theme.save();
 
   // 计算动态奖池并推送
-  const userCount = await User.countDocuments({ isAdmin: false });
-  const dynamicPrizePool = userCount * 400000 + (settings.settledWineGlasses || 0) * 50000;
+  const dynamicPrizePool = await calcPrizePool();
   const settingsData = {
     ...settings.toObject(),
     totalPrizePool: dynamicPrizePool,
@@ -164,6 +286,7 @@ router.post('/:id/random-settle', auth, adminOnly, async (req: AuthRequest, res:
     const theme = await Theme.findById(req.params.id);
     if (!theme) return res.status(404).json({ message: '主题不存在' });
     if (theme.status === 'closed') return res.status(400).json({ message: '该主题已结算' });
+    if (theme.status === 'pending') return res.status(400).json({ message: '主题尚未开始' });
 
     // 随机选择一个选项
     const randomIndex = Math.floor(Math.random() * theme.options.length);

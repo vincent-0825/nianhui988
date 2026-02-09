@@ -18,7 +18,7 @@ router.post('/login', async (req: Request, res: Response) => {
 
     // 管理员登录
     if (trimmedName === 'admin') {
-      if (password !== process.env.ADMIN_PASSWORD) {
+      if (!process.env.ADMIN_PASSWORD || password !== process.env.ADMIN_PASSWORD) {
         return res.status(401).json({ message: '管理员密码错误' });
       }
       let admin = await User.findOne({ name: 'admin' });

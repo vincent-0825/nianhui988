@@ -36,17 +36,22 @@ export const getAllUsers = () => api.get('/user/all');
 export const getLeaderboard = () => api.get('/user/leaderboard');
 export const giveCoins = (userId: string, amount: number) =>
   api.post(`/user/${userId}/coins`, { amount });
+export const deleteUser = (userId: string) => api.delete(`/user/${userId}`);
 
 // Themes
 export const getThemes = () => api.get('/themes');
+export const getAllThemes = () => api.get('/themes/all');
 export const createTheme = (data: {
   title: string; description: string; options: string[]; settlementMode: string;
 }) => api.post('/themes', data);
+export const startTheme = (id: string) => api.post(`/themes/${id}/start`);
 export const deleteTheme = (id: string) => api.delete(`/themes/${id}`);
 export const settleTheme = (id: string, winnerOptionId: string) =>
   api.post(`/themes/${id}/settle`, { winnerOptionId });
 export const randomSettleTheme = (id: string) =>
   api.post(`/themes/${id}/random-settle`);
+export const getWineGlassStats = (themeId: string) =>
+  api.get(`/themes/${themeId}/wine-glass-stats`);
 
 // Bets
 export const placeBet = (data: { themeId: string; optionId: string; amount: number }) =>

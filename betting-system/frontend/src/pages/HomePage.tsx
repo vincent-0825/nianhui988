@@ -31,7 +31,7 @@ interface Theme {
   _id: string;
   title: string;
   description: string;
-  status: 'open' | 'closed';
+  status: 'pending' | 'open' | 'closed';
   settlementMode: 'admin' | 'random';
   winnerOptionId: string | null;
   options: Option[];

@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import {
-  getThemes, createTheme, deleteTheme, settleTheme, randomSettleTheme,
-  getAllUsers, giveCoins, getThemeBets,
+  getAllThemes, createTheme, deleteTheme, settleTheme, randomSettleTheme,
+  startTheme, getWineGlassStats,
+  getAllUsers, giveCoins, deleteUser, getThemeBets,
   updateSettings, resetPool,
 } from '../services/api';
 import socket from '../services/socket';
@@ -12,7 +13,7 @@ interface Theme {
   _id: string;
   title: string;
   description: string;
-  status: 'open' | 'closed';
+  status: 'pending' | 'open' | 'closed';
   settlementMode: 'admin' | 'random';
   winnerOptionId: string | null;
   options: { _id: string; name: string }[];
@@ -35,6 +36,11 @@ interface Settings {
   gameOver: boolean;
 }
 
+interface WineGlassStat {
+  name: string;
+  count: number;
+}
+
 interface Props {
   settings: Settings | null;
   onSettingsChange: () => void;
@@ -54,6 +60,9 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
 
   // 主题统计
   const [themeStats, setThemeStats] = useState<Record<string, any>>({});
+
+  // 酒杯统计
+  const [wineGlassStats, setWineGlassStats] = useState<Record<string, { stats: WineGlassStat[]; total: number }>>({});
 
   // 发放金币
   const [coinAmounts, setCoinAmounts] = useState<Record<string, number>>({});
@@ -77,7 +86,7 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
 
   const fetchThemes = useCallback(async () => {
     try {
-      const res = await getThemes();
+      const res = await getAllThemes();
       setThemes(res.data);
     } catch { /* ignore */ }
   }, []);
@@ -112,6 +121,13 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
     } catch { /* ignore */ }
   };
 
+  const fetchWineGlassStats = async (themeId: string) => {
+    try {
+      const res = await getWineGlassStats(themeId);
+      setWineGlassStats(prev => ({ ...prev, [themeId]: res.data }));
+    } catch { /* ignore */ }
+  };
+
   const handleCreateTheme = async () => {
     if (loading) return;
     const opts = newOptions.filter(o => o.trim());
@@ -130,6 +146,20 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
       setNewDesc('');
       setNewOptions(['', '']);
       setNewMode('admin');
+      fetchThemes();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || t('serverError'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStartTheme = async (id: string) => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      await startTheme(id);
+      toast.success(t('startTheme') + '!');
       fetchThemes();
     } catch (err: any) {
       toast.error(err.response?.data?.message || t('serverError'));
@@ -197,6 +227,25 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
       toast.success(t('giveSuccess'));
       setCoinAmounts(prev => ({ ...prev, [userId]: 0 }));
       fetchUsers();
+      onSettingsChange();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || t('serverError'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeductCoins = async (userId: string) => {
+    if (loading) return;
+    const amount = coinAmounts[userId];
+    if (!amount || amount <= 0) return;
+    setLoading(true);
+    try {
+      await giveCoins(userId, -amount);
+      toast.success(t('saveSuccess'));
+      setCoinAmounts(prev => ({ ...prev, [userId]: 0 }));
+      fetchUsers();
+      onSettingsChange();
     } catch (err: any) {
       toast.error(err.response?.data?.message || t('serverError'));
     } finally {
@@ -230,10 +279,38 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
     finally { setLoading(false); }
   };
 
+  const handleDeleteUser = async (userId: string) => {
+    if (loading) return;
+    if (!confirm(t('deleteUserConfirm'))) return;
+    setLoading(true);
+    try {
+      await deleteUser(userId);
+      toast.success(t('userDeleted'));
+      fetchUsers();
+      onSettingsChange();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || t('serverError'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const addOption = () => setNewOptions([...newOptions, '']);
   const removeOption = (i: number) => {
     if (newOptions.length <= 2) return;
     setNewOptions(newOptions.filter((_, idx) => idx !== i));
+  };
+
+  const getStatusBadge = (status: string) => {
+    if (status === 'pending') return 'bg-yellow-600/20 text-yellow-400 border border-yellow-500/30';
+    if (status === 'open') return 'bg-green-500/20 text-green-400 border border-green-500/30';
+    return 'bg-gray-600/50 text-gray-300';
+  };
+
+  const getStatusText = (status: string) => {
+    if (status === 'pending') return t('pending');
+    if (status === 'open') return t('ongoing');
+    return t('ended');
   };
 
   const tabClass = (active: boolean) =>
@@ -246,7 +323,7 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
       {/* Tab切换 */}
       <div className="flex gap-2">
         <button onClick={() => setTab('themes')} className={tabClass(tab === 'themes')}>
-          {t('themeManage')}
+          {t('themeLibrary')}
         </button>
         <button onClick={() => setTab('users')} className={tabClass(tab === 'users')}>
           {t('userManage')}
@@ -333,10 +410,8 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
             <div key={theme._id} className="bg-red-950/40 rounded-2xl border border-yellow-800/30 p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    theme.status === 'closed' ? 'bg-gray-600/50 text-gray-300' : 'bg-green-500/20 text-green-400'
-                  }`}>
-                    {theme.status === 'closed' ? t('ended') : t('ongoing')}
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusBadge(theme.status)}`}>
+                    {getStatusText(theme.status)}
                   </span>
                   <span className="text-xs px-2 py-0.5 rounded-full bg-red-900/40 text-red-300/60">
                     {theme.settlementMode === 'random' ? `🎲 ${t('systemRandom')}` : t('adminPick')}
@@ -348,9 +423,22 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
                 </button>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
+                {/* 开始按钮（仅pending状态） */}
+                {theme.status === 'pending' && (
+                  <button
+                    onClick={() => handleStartTheme(theme._id)}
+                    className="text-xs px-3 py-1 rounded-full bg-green-600/20 text-green-400 border border-green-500/30 hover:bg-green-600/30"
+                  >
+                    ▶ {t('startTheme')}
+                  </button>
+                )}
                 <button onClick={() => fetchThemeStats(theme._id)} className="text-xs text-yellow-400 hover:text-yellow-300">
                   {t('refreshStats')}
+                </button>
+                {/* 酒杯统计按钮 */}
+                <button onClick={() => fetchWineGlassStats(theme._id)} className="text-xs text-pink-400 hover:text-pink-300">
+                  🍷 {t('wineGlassRanking')}
                 </button>
                 {theme.status === 'open' && theme.settlementMode === 'random' && (
                   <button
@@ -361,6 +449,25 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
                   </button>
                 )}
               </div>
+
+              {/* 酒杯排行 */}
+              {wineGlassStats[theme._id] && wineGlassStats[theme._id].total > 0 && (
+                <div className="bg-pink-950/30 rounded-xl border border-pink-800/30 p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-pink-400">🍷 {t('wineGlassRanking')}</span>
+                    <span className="text-xs text-pink-400/60">{t('total')}: {wineGlassStats[theme._id].total} {t('glasses')}</span>
+                  </div>
+                  {wineGlassStats[theme._id].stats.map((s, i) => (
+                    <div key={i} className="flex items-center justify-between text-sm py-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-pink-400/60 w-6">{i + 1}.</span>
+                        <span className="text-yellow-50">{s.name}</span>
+                      </div>
+                      <span className="text-pink-400 font-semibold">🍷 {s.count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* 选项 & 结算按钮 */}
               <div className="space-y-2">
@@ -427,9 +534,21 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
                 />
                 <button
                   onClick={() => handleGiveCoins(u._id)}
-                  className="px-3 py-1.5 text-xs rounded-lg bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30"
+                  className="px-2 py-1.5 text-xs rounded-lg bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30"
                 >
-                  {t('giveCoins')}
+                  +
+                </button>
+                <button
+                  onClick={() => handleDeductCoins(u._id)}
+                  className="px-2 py-1.5 text-xs rounded-lg bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30"
+                >
+                  −
+                </button>
+                <button
+                  onClick={() => handleDeleteUser(u._id)}
+                  className="px-2 py-1.5 text-xs rounded-lg bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30"
+                >
+                  {t('deleteUser')}
                 </button>
               </div>
             </div>
@@ -451,7 +570,7 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
                 </span>
               </div>
               <div className="text-xs text-red-400/40 mt-1">
-                = N × 40{t('wan')} + 🍷 × 5{t('wan')}
+                = {t('totalCoinsAll')}
               </div>
             </div>
           )}

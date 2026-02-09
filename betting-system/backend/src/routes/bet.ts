@@ -48,22 +48,15 @@ router.post('/', auth, async (req: AuthRequest, res: Response) => {
     let actualAmount = amount;
 
     if (user.coins === 0) {
-      // 金币为0时使用酒杯：1杯酒 = 5万金币（固定）
       useWineGlass = true;
       actualAmount = 50000;
-      user.wineGlasses += 1;
     } else if (user.coins >= amount) {
-      // 正常扣除金币
-      user.coins -= amount;
+      // 金币充足
     } else {
-      // 金币不足
       return res.status(400).json({ message: '金币不足' });
     }
 
-    // 增加参与轮次
-    user.rounds += 1;
-    await user.save();
-
+    // 先创建押注记录（有唯一索引保护，防止重复押注）
     const bet = await Bet.create({
       userId: req.userId,
       themeId,
@@ -71,6 +64,15 @@ router.post('/', auth, async (req: AuthRequest, res: Response) => {
       amount: actualAmount,
       useWineGlass,
     });
+
+    // 押注创建成功后，再扣除金币/增加酒杯
+    if (useWineGlass) {
+      user.wineGlasses += 1;
+    } else {
+      user.coins -= amount;
+    }
+    user.rounds += 1;
+    await user.save();
 
     // 实时推送押注更新
     (req as any).io?.emit('betUpdate', { themeId });

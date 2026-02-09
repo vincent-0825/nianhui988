@@ -11,6 +11,16 @@ interface UserInfo {
   rounds: number;
 }
 
+// 固定奖金等级
+function getPrizeTier(rank: number): number {
+  if (rank === 1) return 3000000; // 300万
+  if (rank === 2) return 1500000; // 150万
+  if (rank === 3) return 1000000; // 100万
+  if (rank >= 4 && rank <= 10) return 500000; // 50万
+  if (rank >= 11 && rank <= 25) return 100000; // 10万
+  return 0;
+}
+
 export default function LeaderboardPage() {
   const [users, setUsers] = useState<UserInfo[]>([]);
   const [totalPrizePool, setTotalPrizePool] = useState(0);
@@ -66,6 +76,19 @@ export default function LeaderboardPage() {
         </div>
       </div>
 
+      {/* 奖金等级说明 */}
+      <div className="bg-red-950/40 rounded-2xl border border-yellow-800/30 p-3">
+        <p className="text-xs text-red-300/60 mb-2 text-center">{t('prizeTier')}</p>
+        <div className="grid grid-cols-3 gap-1 text-xs text-center">
+          <div className="text-yellow-300">🥇 300{t('wan')}</div>
+          <div className="text-gray-300">🥈 150{t('wan')}</div>
+          <div className="text-orange-400">🥉 100{t('wan')}</div>
+          <div className="text-red-300/80">4-10 50{t('wan')}</div>
+          <div className="text-red-300/80">11-25 10{t('wan')}</div>
+          <div className="text-red-400/40">26+ 0</div>
+        </div>
+      </div>
+
       {/* 排行表头 */}
       <div className="flex items-center px-4 py-2 text-xs text-red-400/60">
         <span className="w-10">{t('rank')}</span>
@@ -79,9 +102,9 @@ export default function LeaderboardPage() {
       {sorted.length === 0 ? (
         <div className="text-center py-10 text-red-300/60">{t('noUsers')}</div>
       ) : (
-        sorted.map((u, i) => {
+        sorted.slice(0, 25).map((u, i) => {
           const proportion = totalCoins > 0 ? u.coins / totalCoins : 0;
-          const prize = proportion * totalPrizePool;
+          const prize = getPrizeTier(i + 1);
           return (
             <div
               key={u._id}
@@ -107,8 +130,8 @@ export default function LeaderboardPage() {
               <span className="w-16 text-right text-red-300/80 text-sm">
                 {(proportion * 100).toFixed(1)}%
               </span>
-              <span className="w-20 text-right text-green-400 font-semibold text-sm">
-                {(prize / 10000).toFixed(0)}{t('wan')}
+              <span className={`w-20 text-right font-semibold text-sm ${prize > 0 ? 'text-green-400' : 'text-red-400/40'}`}>
+                {prize > 0 ? `${(prize / 10000).toFixed(0)}${t('wan')}` : '-'}
               </span>
             </div>
           );
@@ -117,7 +140,7 @@ export default function LeaderboardPage() {
 
       {/* 计算说明 */}
       <div className="text-center text-xs text-red-400/40 py-2">
-        {t('prizePool')} = {t('totalUsers').replace('{count}', 'N')} × 40{t('wan')} + 🍷 × 5{t('wan')}
+        {t('prizePool')} = {t('totalCoinsAll')}
       </div>
     </div>
   );

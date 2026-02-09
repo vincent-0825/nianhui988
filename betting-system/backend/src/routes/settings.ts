@@ -14,18 +14,20 @@ async function getSettings() {
   return settings;
 }
 
-// 动态计算总奖池：参与人数 × 40万 + 已结算酒杯数 × 5万
-async function calcPrizePool(settings: any) {
-  const userCount = await User.countDocuments({ isAdmin: false });
-  const settledWineGlasses = settings.settledWineGlasses || 0;
-  return userCount * 400000 + settledWineGlasses * 50000;
+// 动态计算总奖池：当前所有用户金币总和
+async function calcPrizePool() {
+  const result = await User.aggregate([
+    { $match: { isAdmin: false } },
+    { $group: { _id: null, total: { $sum: '$coins' } } },
+  ]);
+  return result.length > 0 ? result[0].total : 0;
 }
 
 // GET /api/settings - 获取系统设置（所有用户可读）
 router.get('/', auth, async (_req: AuthRequest, res: Response) => {
   try {
     const settings = await getSettings();
-    const dynamicPrizePool = await calcPrizePool(settings);
+    const dynamicPrizePool = await calcPrizePool();
     return res.json({
       ...settings.toObject(),
       totalPrizePool: dynamicPrizePool,
@@ -47,7 +49,7 @@ router.put('/', auth, adminOnly, async (req: AuthRequest, res: Response) => {
     if (maxBet !== undefined) settings.maxBet = maxBet;
 
     await settings.save();
-    const dynamicPrizePool = await calcPrizePool(settings);
+    const dynamicPrizePool = await calcPrizePool();
     const result = {
       ...settings.toObject(),
       totalPrizePool: dynamicPrizePool,
@@ -75,5 +77,5 @@ router.post('/reset-pool', auth, adminOnly, async (req: AuthRequest, res: Respon
   }
 });
 
-export { getSettings };
+export { getSettings, calcPrizePool };
 export default router;
