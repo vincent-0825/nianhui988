@@ -118,7 +118,8 @@ export default function HomePage({ user, updateUser, settings }: Props) {
   const getBetAmount = (themeId: string) => betAmounts[themeId] || minBet;
 
   const handleIncrease = (themeId: string) => {
-    const next = Math.min(getBetAmount(themeId) + STEP, maxBet);
+    const upperLimit = Math.min(maxBet, user.coins);
+    const next = Math.min(getBetAmount(themeId) + STEP, upperLimit);
     setBetAmounts(prev => ({ ...prev, [themeId]: next }));
   };
 
@@ -379,7 +380,7 @@ export default function HomePage({ user, updateUser, settings }: Props) {
                           </div>
                           <button
                             onClick={() => handleIncrease(theme._id)}
-                            disabled={getBetAmount(theme._id) >= maxBet}
+                            disabled={getBetAmount(theme._id) >= Math.min(maxBet, user.coins)}
                             className="w-12 h-12 rounded-full bg-gradient-to-br from-red-900/60 to-red-800/60 border-2 border-yellow-600/40 text-yellow-300 text-2xl font-bold flex items-center justify-center hover:bg-red-800/60 active:scale-90 disabled:opacity-30 shadow-md shadow-yellow-900/10"
                           >+</button>
                         </div>
@@ -387,7 +388,7 @@ export default function HomePage({ user, updateUser, settings }: Props) {
                         <div className="flex gap-2 justify-center flex-wrap">
                           {[5, 10, 20, 50].map(n => {
                             const val = n * 10000;
-                            if (val > maxBet || val < minBet) return null;
+                            if (val > maxBet || val < minBet || val > user.coins) return null;
                             return (
                               <button
                                 key={n}
