@@ -44,6 +44,7 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
   const [themes, setThemes] = useState<Theme[]>([]);
   const [users, setUsers] = useState<UserInfo[]>([]);
   const [tab, setTab] = useState<'themes' | 'users' | 'settings'>('themes');
+  const [loading, setLoading] = useState(false);
 
   // 创建主题表单
   const [newTitle, setNewTitle] = useState('');
@@ -114,9 +115,11 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
   };
 
   const handleCreateTheme = async () => {
+    if (loading) return;
     const opts = newOptions.filter(o => o.trim());
     if (!newTitle.trim()) { toast.error(t('themeTitle')); return; }
     if (opts.length < 2) { toast.error(t('options')); return; }
+    setLoading(true);
     try {
       await createTheme({
         title: newTitle.trim(),
@@ -132,22 +135,30 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
       fetchThemes();
     } catch (err: any) {
       toast.error(err.response?.data?.message || t('serverError'));
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDelete = async (id: string) => {
+    if (loading) return;
     if (!confirm(t('deleteConfirm'))) return;
+    setLoading(true);
     try {
       await deleteTheme(id);
       toast.success(t('deleted'));
       fetchThemes();
     } catch (err: any) {
       toast.error(err.response?.data?.message || t('serverError'));
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSettle = async (themeId: string, optionId: string) => {
+    if (loading) return;
     if (!confirm(t('settleConfirm'))) return;
+    setLoading(true);
     try {
       const res = await settleTheme(themeId, optionId);
       toast.success(`${t('settled')}! ${res.data.winnerCount} winners, ${res.data.loserCount} losers`);
@@ -156,11 +167,15 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
       onSettingsChange();
     } catch (err: any) {
       toast.error(err.response?.data?.message || t('serverError'));
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleRandomSettle = async (themeId: string) => {
+    if (loading) return;
     if (!confirm(t('settleConfirm'))) return;
+    setLoading(true);
     try {
       const res = await randomSettleTheme(themeId);
       toast.success(`${t('settled')}! ${t('winner')}: ${res.data.winnerOptionName}`);
@@ -169,12 +184,16 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
       onSettingsChange();
     } catch (err: any) {
       toast.error(err.response?.data?.message || t('serverError'));
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleGiveCoins = async (userId: string) => {
+    if (loading) return;
     const amount = coinAmounts[userId];
     if (!amount || amount <= 0) return;
+    setLoading(true);
     try {
       await giveCoins(userId, amount);
       toast.success(t('giveSuccess'));
@@ -182,26 +201,35 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
       fetchUsers();
     } catch (err: any) {
       toast.error(err.response?.data?.message || t('serverError'));
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSaveSettings = async () => {
+    if (loading) return;
+    setLoading(true);
     try {
       await updateSettings(editSettings);
       toast.success(t('saveSuccess'));
       onSettingsChange();
     } catch (err: any) {
       toast.error(err.response?.data?.message || t('saveFail'));
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleResetPool = async () => {
-    if (!confirm('Reset prize pool?')) return;
+    if (loading) return;
+    if (!confirm(t('resetPool') + '?')) return;
+    setLoading(true);
     try {
       await resetPool();
       toast.success(t('saveSuccess'));
       onSettingsChange();
     } catch { toast.error(t('saveFail')); }
+    finally { setLoading(false); }
   };
 
   const addOption = () => setNewOptions([...newOptions, '']);
@@ -295,9 +323,10 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
             </div>
             <button
               onClick={handleCreateTheme}
-              className="w-full py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 active:scale-95 text-sm"
+              disabled={loading}
+              className="w-full py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 active:scale-95 text-sm disabled:opacity-50"
             >
-              {t('create')}
+              {loading ? t('loading') : t('create')}
             </button>
           </div>
 
@@ -485,7 +514,7 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
               onClick={handleResetPool}
               className="px-4 py-2.5 rounded-xl font-semibold text-orange-400 bg-orange-500/20 border border-orange-500/30 hover:bg-orange-500/30 active:scale-95 text-sm"
             >
-              {t('currentPool')} Reset
+              {t('resetPool')}
             </button>
           </div>
         </div>

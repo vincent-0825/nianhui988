@@ -49,13 +49,13 @@ router.post('/', auth, async (req: AuthRequest, res: Response) => {
     if (user.coins >= amount) {
       // 正常扣除金币
       user.coins -= amount;
-    } else if (user.coins === 0) {
-      // 金币为0，使用酒杯计数
-      useWineGlass = true;
-      const glassCount = Math.ceil(amount / settings.minBet);
-      user.wineGlasses += glassCount;
     } else {
-      return res.status(400).json({ message: '金币不足，金币归零后可用酒杯参与' });
+      // 金币不足时：先用完剩余金币，不足部分用酒杯计数
+      useWineGlass = true;
+      const shortage = amount - user.coins;
+      const glassCount = Math.ceil(shortage / settings.minBet);
+      user.coins = 0;
+      user.wineGlasses += glassCount;
     }
 
     // 增加参与轮次

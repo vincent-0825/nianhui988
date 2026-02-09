@@ -88,6 +88,7 @@ const zh = {
   currentPool: '当前奖池',
   saveSuccess: '保存成功！',
   saveFail: '保存失败',
+  resetPool: '重置奖池',
   wan: '万',
 };
 
@@ -176,6 +177,7 @@ const en: typeof zh = {
   currentPool: 'Current Pool',
   saveSuccess: 'Saved!',
   saveFail: 'Save failed',
+  resetPool: 'Reset Pool',
   wan: '0K',
 };
 

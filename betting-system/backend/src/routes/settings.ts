@@ -33,10 +33,11 @@ router.put('/', auth, adminOnly, async (req: AuthRequest, res: Response) => {
     if (minBet !== undefined) settings.minBet = minBet;
     if (maxBet !== undefined) settings.maxBet = maxBet;
     if (totalPrizePool !== undefined) {
+      const oldTotal = settings.totalPrizePool;
       settings.totalPrizePool = totalPrizePool;
       // 重新计算当前奖池（如果增大了总额）
-      if (totalPrizePool > settings.totalPrizePool) {
-        settings.currentPool += (totalPrizePool - settings.totalPrizePool);
+      if (totalPrizePool > oldTotal) {
+        settings.currentPool += (totalPrizePool - oldTotal);
       }
       settings.gameOver = settings.currentPool <= 0;
     }

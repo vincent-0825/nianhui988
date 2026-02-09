@@ -91,13 +91,12 @@ async function settleTheme(themeId: string, winnerOptionId: string, io: any) {
     }
   }
 
-  // 从总奖池中扣除（输家损失的金币从总奖池中减少）
+  // 从总奖池中扣除（输家损失的金币从系统总奖池中减少）
   const settings = await getSettings();
-  if (winnerBets.length > 0) {
-    // 总奖池减少 = 赢家获得的奖励部分（不含退还的本金）
-    // 实际上奖池金额在用户间流转，总奖池按总押注额减少
-    const totalBetAmount = allBets.reduce((sum, b) => sum + b.amount, 0);
-    settings.currentPool -= totalBetAmount;
+  if (allBets.length > 0) {
+    // 总奖池减少 = 输家损失的金额（即奖励池金额）
+    // 赢家之间的金币流转不影响总奖池，只有输家的损失从总奖池扣除
+    settings.currentPool -= prizePool;
     if (settings.currentPool <= 0) {
       settings.currentPool = 0;
       settings.gameOver = true;
