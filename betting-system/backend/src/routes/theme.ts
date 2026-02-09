@@ -62,11 +62,10 @@ router.put('/:id', auth, adminOnly, async (req: AuthRequest, res: Response) => {
       // 更新现有选项的名称，支持新增选项
       theme.options = options.map((opt: any) => {
         if (opt._id) {
-          // 保留原有 _id
           return { _id: opt._id, name: opt.name };
         }
         return { name: opt.name };
-      });
+      }) as any;
     }
 
     await theme.save();
