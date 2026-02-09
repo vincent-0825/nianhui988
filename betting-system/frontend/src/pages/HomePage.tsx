@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { getThemes, getThemeBets, placeBet, getProfile, skipBet } from '../services/api';
 import socket from '../services/socket';
@@ -61,6 +61,16 @@ export default function HomePage({ user, updateUser, settings }: Props) {
   const [betAmounts, setBetAmounts] = useState<Record<string, number>>({});
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [justSelected, setJustSelected] = useState<string | null>(null);
+  const selectTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  const handleSelectOption = (themeId: string, optionId: string) => {
+    setSelectedOptions(prev => ({ ...prev, [themeId]: optionId }));
+    const key = `${themeId}-${optionId}`;
+    setJustSelected(key);
+    clearTimeout(selectTimer.current);
+    selectTimer.current = setTimeout(() => setJustSelected(null), 450);
+  };
 
   const fetchThemes = useCallback(async () => {
     try {
@@ -166,15 +176,69 @@ export default function HomePage({ user, updateUser, settings }: Props) {
   if (themes.length === 0) {
     return (
       <div className="text-center py-20 text-red-300/60">
-        <div className="text-5xl mb-4">🐴</div>
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <span className="text-3xl animate-lantern">🏮</span>
+          <div className="text-5xl">🐴</div>
+          <span className="text-3xl animate-lantern-alt">🏮</span>
+        </div>
         <p>{t('noThemes')}</p>
         <p className="text-sm mt-1">{t('waitingAdmin')}</p>
       </div>
     );
   }
 
+  // 获取主题卡片的状态标签
+  const getStatusBadge = (theme: Theme, isWin: boolean, isLose: boolean, hasBet: boolean) => {
+    const isClosed = theme.status === 'closed';
+    if (!isClosed) {
+      // 进行中 - 绿色脉冲指示
+      return (
+        <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-0.5 rounded-full font-medium bg-green-600/20 text-green-400 border border-green-500/30">
+          <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse-dot" />
+          {t('ongoing')}
+        </span>
+      );
+    }
+    if (isWin) {
+      // 已结束 + 赢了 - 金色
+      return (
+        <span className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full font-bold bg-yellow-500/20 text-yellow-300 border border-yellow-400/40">
+          🏆 {t('wonLabel')}
+        </span>
+      );
+    }
+    if (isLose) {
+      // 已结束 + 输了 - 蓝灰色
+      return (
+        <span className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full font-medium bg-blue-900/30 text-blue-300 border border-blue-500/30">
+          💔 {t('lostLabel')}
+        </span>
+      );
+    }
+    if (isClosed && !hasBet) {
+      // 已结束 + 未参与 - 灰色
+      return (
+        <span className="text-xs px-2.5 py-0.5 rounded-full font-medium bg-gray-600/30 text-gray-400 border border-gray-500/30">
+          {t('noBetLabel')}
+        </span>
+      );
+    }
+    return (
+      <span className="text-xs px-2.5 py-0.5 rounded-full font-medium bg-gray-600/50 text-gray-300">
+        {t('ended')}
+      </span>
+    );
+  };
+
   return (
     <div className="py-4 space-y-4">
+      {/* 新春装饰横幅 */}
+      <div className="flex items-center justify-center gap-2 text-center py-2">
+        <span className="text-lg animate-lantern">🏮</span>
+        <span className="text-xs text-yellow-500/60 font-medium">✦ {t('springGreeting')} ✦</span>
+        <span className="text-lg animate-lantern-alt">🏮</span>
+      </div>
+
       {user.coins === 0 && (
         <div className="p-3 rounded-xl bg-yellow-900/20 border border-yellow-600/30 text-center text-sm text-yellow-300">
           🍷 {t('wineGlassNote')} — {t('yourWineGlasses')}: {user.wineGlasses}
@@ -193,12 +257,14 @@ export default function HomePage({ user, updateUser, settings }: Props) {
         return (
           <div
             key={theme._id}
-            className={`rounded-2xl overflow-hidden backdrop-blur-sm ${
+            className={`rounded-2xl overflow-hidden backdrop-blur-sm transition-all duration-300 ${
               isWin
-                ? 'bg-red-900/50 border-2 border-yellow-500/60 shadow-lg shadow-yellow-900/20'
+                ? 'bg-gradient-to-br from-red-900/60 via-yellow-900/30 to-red-900/60 border-2 border-yellow-500/60 animate-win-glow'
                 : isLose
-                ? 'bg-blue-950/50 border-2 border-blue-500/40'
-                : 'bg-red-950/40 border border-yellow-800/30'
+                ? 'bg-gradient-to-br from-blue-950/50 to-slate-900/50 border-2 border-blue-500/30 opacity-80'
+                : isClosed && !hasBet
+                ? 'bg-gray-900/40 border border-gray-700/30 opacity-70'
+                : 'bg-red-950/40 border border-yellow-800/30 couplet-border'
             }`}
           >
             <button
@@ -207,21 +273,21 @@ export default function HomePage({ user, updateUser, settings }: Props) {
             >
               <div className="flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                    isClosed
-                      ? 'bg-gray-600/50 text-gray-300'
-                      : 'bg-green-600/20 text-green-400 border border-green-500/30'
-                  }`}>
-                    {isClosed ? t('ended') : t('ongoing')}
-                  </span>
+                  {getStatusBadge(theme, isWin, isLose, hasBet)}
                   {theme.settlementMode === 'random' && !isClosed && (
                     <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-600/20 text-yellow-400 border border-yellow-500/30">🎲</span>
                   )}
-                  <h3 className="font-semibold text-yellow-50">{theme.title}</h3>
+                  <h3 className={`font-semibold ${
+                    isWin ? 'text-yellow-200' : isLose ? 'text-blue-200/80' : 'text-yellow-50'
+                  }`}>{theme.title}</h3>
                 </div>
-                {theme.description && <p className="text-red-300/60 text-sm mt-1">{theme.description}</p>}
+                {theme.description && <p className={`text-sm mt-1 ${
+                  isLose ? 'text-blue-300/40' : 'text-red-300/60'
+                }`}>{theme.description}</p>}
               </div>
-              <svg className={`w-5 h-5 text-yellow-600 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-180' : ''} ${
+                isWin ? 'text-yellow-400' : isLose ? 'text-blue-400/50' : 'text-yellow-600'
+              }`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
@@ -238,21 +304,24 @@ export default function HomePage({ user, updateUser, settings }: Props) {
                     <div key={option._id} className="space-y-1">
                       <button
                         disabled={isClosed || hasBet}
-                        onClick={() => setSelectedOptions(prev => ({ ...prev, [theme._id]: option._id }))}
-                        className={`w-full p-3 rounded-xl text-left transition-all ${
+                        onClick={() => handleSelectOption(theme._id, option._id)}
+                        className={`w-full p-3 rounded-xl text-left transition-all duration-200 ${
                           isWinner
                             ? 'bg-red-700/30 border-2 border-yellow-500 ring-2 ring-yellow-500/30'
                             : isMyBetOption
                             ? 'bg-red-800/30 border-2 border-red-400'
                             : isSelected
-                            ? 'bg-yellow-700/20 border-2 border-yellow-500'
+                            ? 'bg-yellow-700/20 border-2 border-yellow-500 shadow-md shadow-yellow-500/10'
                             : 'bg-red-900/30 border-2 border-transparent hover:border-yellow-700/50'
-                        } ${(isClosed || hasBet) ? 'cursor-default' : 'cursor-pointer active:scale-[0.98]'}`}
+                        } ${(isClosed || hasBet) ? 'cursor-default' : 'cursor-pointer active:scale-[0.98]'} ${
+                          justSelected === `${theme._id}-${option._id}` ? 'animate-option-select' : ''
+                        }`}
                       >
                         <div className="flex items-center justify-between">
                           <span className="font-medium flex items-center gap-2">
                             {isWinner && <span className="text-yellow-400">&#10003;</span>}
                             {isMyBetOption && <span className="text-red-300 text-xs">[{t('alreadyBet')}]</span>}
+                            {isSelected && !isClosed && !hasBet && <span className="text-yellow-400 text-sm">&#10003;</span>}
                             {option.name}
                           </span>
                           <span className="text-sm text-red-300/80">
@@ -357,10 +426,13 @@ export default function HomePage({ user, updateUser, settings }: Props) {
                 {isClosed && hasBet && (
                   <div className={`text-center py-3 text-sm font-bold rounded-xl ${
                     myBet.optionId === theme.winnerOptionId
-                      ? 'text-yellow-300 bg-red-800/40 border border-yellow-600/30'
-                      : 'text-blue-300 bg-blue-950/40 border border-blue-600/30'
+                      ? 'text-yellow-200 bg-gradient-to-r from-yellow-700/20 via-yellow-600/30 to-yellow-700/20 border border-yellow-500/40 shadow-lg shadow-yellow-900/20'
+                      : 'text-blue-300/80 bg-blue-950/40 border border-blue-700/30'
                   }`}>
-                    {myBet.optionId === theme.winnerOptionId ? `🏆 ${t('youWin')}` : `😔 ${t('youLose')}`}
+                    {myBet.optionId === theme.winnerOptionId
+                      ? <span className="flex items-center justify-center gap-2">🏆 <span className="animate-sparkle">{t('youWin')}</span> 🎉</span>
+                      : `😔 ${t('youLose')}`
+                    }
                   </div>
                 )}
               </div>

@@ -101,11 +101,11 @@ export default function App() {
     <>
       <Toaster position="top-center" />
       {/* 顶部导航 - 马年新春风格 */}
-      <header className="sticky top-0 z-50 bg-red-950/95 backdrop-blur-md border-b border-yellow-800/30">
+      <header className="sticky top-0 z-50 bg-gradient-to-r from-red-950/95 via-red-900/95 to-red-950/95 backdrop-blur-md border-b border-yellow-700/40 shadow-lg shadow-red-950/30">
         <div className="max-w-lg mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <h1 className="text-lg font-bold bg-gradient-to-r from-yellow-300 via-red-400 to-yellow-300 bg-clip-text text-transparent flex items-center gap-1.5">
-              🐴 {t('appName')}
+              <span className="text-xl animate-lantern">🏮</span> {t('appName')} <span className="text-base">🐴</span>
             </h1>
             <div className="flex items-center gap-2">
               <button
@@ -172,13 +172,13 @@ export default function App() {
 
       {/* 底部导航栏 */}
       {page !== 'admin' && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-red-950/95 backdrop-blur-md border-t border-yellow-800/30 z-50">
+        <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-red-950/95 via-red-900/95 to-red-950/95 backdrop-blur-md border-t border-yellow-700/40 z-50 shadow-lg shadow-red-950/50">
           <div className="max-w-lg mx-auto flex">
             <button
               onClick={() => setPage('home')}
               className={`flex-1 py-3 text-center text-sm font-semibold transition-all ${
                 page === 'home'
-                  ? 'text-yellow-300 border-t-2 border-yellow-400'
+                  ? 'text-yellow-300 border-t-2 border-yellow-400 bg-yellow-500/5'
                   : 'text-red-400/60'
               }`}
             >
@@ -188,7 +188,7 @@ export default function App() {
               onClick={() => setPage('leaderboard')}
               className={`flex-1 py-3 text-center text-sm font-semibold transition-all ${
                 page === 'leaderboard'
-                  ? 'text-yellow-300 border-t-2 border-yellow-400'
+                  ? 'text-yellow-300 border-t-2 border-yellow-400 bg-yellow-500/5'
                   : 'text-red-400/60'
               }`}
             >

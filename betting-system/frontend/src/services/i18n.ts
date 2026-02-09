@@ -107,6 +107,9 @@ const zh = {
   deleteUser: '删除',
   deleteUserConfirm: '确定删除该用户？该用户的所有押注也会被删除',
   userDeleted: '用户已删除',
+  wonLabel: '赢了',
+  lostLabel: '未中奖',
+  noBetLabel: '未参与',
 };
 
 const en: typeof zh = {
@@ -213,6 +216,9 @@ const en: typeof zh = {
   deleteUser: 'Delete',
   deleteUserConfirm: 'Delete this user? All their bets will also be removed.',
   userDeleted: 'User deleted',
+  wonLabel: 'Won',
+  lostLabel: 'Lost',
+  noBetLabel: 'No Bet',
 };
 
 const translations = { zh, en } as const;

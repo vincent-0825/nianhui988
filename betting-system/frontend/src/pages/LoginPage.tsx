@@ -35,8 +35,20 @@ export default function LoginPage({ onLogin, toggleLang, lang }: Props) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden">
+      {/* 装饰灯笼 */}
+      <div className="absolute top-4 left-6 text-4xl animate-lantern opacity-80">🏮</div>
+      <div className="absolute top-8 right-8 text-3xl animate-lantern-alt opacity-70">🏮</div>
+      <div className="absolute top-2 left-1/3 text-2xl animate-lantern-alt opacity-50">🧧</div>
+      <div className="absolute top-6 right-1/3 text-2xl animate-lantern opacity-50">🧧</div>
+
+      {/* 装饰金色光点 */}
+      <div className="absolute top-20 left-10 w-2 h-2 rounded-full bg-yellow-400/40 animate-sparkle" />
+      <div className="absolute top-32 right-12 w-1.5 h-1.5 rounded-full bg-yellow-300/30 animate-sparkle" style={{ animationDelay: '0.5s' }} />
+      <div className="absolute bottom-40 left-8 w-2 h-2 rounded-full bg-yellow-400/30 animate-sparkle" style={{ animationDelay: '1s' }} />
+      <div className="absolute bottom-32 right-10 w-1.5 h-1.5 rounded-full bg-yellow-300/40 animate-sparkle" style={{ animationDelay: '1.5s' }} />
+
+      <div className="w-full max-w-sm relative z-10">
         {/* 语言切换 */}
         <div className="text-right mb-4">
           <button
@@ -48,8 +60,15 @@ export default function LoginPage({ onLogin, toggleLang, lang }: Props) {
         </div>
 
         <div className="text-center mb-8">
-          <div className="text-6xl mb-2">🐴</div>
-          <p className="text-yellow-400 text-sm mb-2">{t('springGreeting')}</p>
+          {/* 新春横幅 */}
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <span className="text-3xl animate-lantern">🏮</span>
+            <div className="text-6xl">🐴</div>
+            <span className="text-3xl animate-lantern-alt">🏮</span>
+          </div>
+          <div className="inline-block px-6 py-1 rounded-full bg-gradient-to-r from-yellow-600/20 via-red-600/20 to-yellow-600/20 border border-yellow-500/30 mb-3">
+            <p className="text-yellow-400 text-sm font-medium">{t('springGreeting')}</p>
+          </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-yellow-300 via-red-400 to-yellow-300 bg-clip-text text-transparent">
             {t('loginTitle')}
           </h1>
@@ -57,7 +76,7 @@ export default function LoginPage({ onLogin, toggleLang, lang }: Props) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="bg-red-950/60 rounded-2xl p-6 border border-yellow-700/30 backdrop-blur-sm shadow-lg shadow-red-950/50">
+          <div className="bg-red-950/60 rounded-2xl p-6 border-2 border-yellow-700/40 backdrop-blur-sm shadow-lg shadow-red-950/50 couplet-border">
             <input
               type="text"
               placeholder={t('enterName')}
@@ -80,9 +99,9 @@ export default function LoginPage({ onLogin, toggleLang, lang }: Props) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-4 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-red-700 to-red-600 hover:from-red-600 hover:to-red-500 disabled:opacity-50 transition-all active:scale-95 border border-yellow-600/30 shadow-lg"
+              className="w-full mt-4 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-red-700 via-red-600 to-red-700 hover:from-red-600 hover:via-red-500 hover:to-red-600 disabled:opacity-50 transition-all active:scale-95 border border-yellow-500/40 shadow-lg shadow-red-900/50 text-base"
             >
-              {loading ? t('loading') : t('enterGame')}
+              {loading ? t('loading') : `🎊 ${t('enterGame')}`}
             </button>
           </div>
 
@@ -94,6 +113,13 @@ export default function LoginPage({ onLogin, toggleLang, lang }: Props) {
             {isAdmin ? t('backToNormal') : t('adminLogin')}
           </button>
         </form>
+
+        {/* 底部装饰 */}
+        <div className="text-center mt-8 text-red-400/30 text-xs flex items-center justify-center gap-2">
+          <span>✦</span>
+          <span>{t('springGreeting')}</span>
+          <span>✦</span>
+        </div>
       </div>
     </div>
   );

@@ -61,7 +61,12 @@ export default function LeaderboardPage() {
   return (
     <div className="py-4 space-y-4">
       {/* 总奖池 & 总金币 */}
-      <div className="bg-red-950/40 rounded-2xl border border-yellow-800/30 p-4 text-center space-y-2">
+      <div className="bg-gradient-to-br from-red-950/50 via-red-900/30 to-red-950/50 rounded-2xl border border-yellow-700/40 p-4 text-center space-y-2 couplet-border">
+        <div className="flex items-center justify-center gap-2 mb-1">
+          <span className="text-sm animate-lantern">🏮</span>
+          <span className="text-xs text-yellow-500/60">✦</span>
+          <span className="text-sm animate-lantern-alt">🏮</span>
+        </div>
         <div>
           <p className="text-xs text-red-300/60">{t('prizePool')}（{t('totalUsers').replace('{count}', String(users.length))}）</p>
           <p className="text-2xl font-bold text-green-400 mt-1">

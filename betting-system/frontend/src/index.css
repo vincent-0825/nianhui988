@@ -30,6 +30,73 @@ body::before {
   z-index: 1;
 }
 
+/* 新春灯笼浮动动画 */
+@keyframes lantern-float {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-8px) rotate(3deg); }
+}
+@keyframes lantern-float-alt {
+  0%, 100% { transform: translateY(-5px) rotate(2deg); }
+  50% { transform: translateY(3px) rotate(-2deg); }
+}
+
+/* 金光闪烁 */
+@keyframes sparkle {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* 赢了庆祝光晕 */
+@keyframes win-glow {
+  0%, 100% { box-shadow: 0 0 15px rgba(255, 215, 0, 0.3), 0 0 30px rgba(255, 215, 0, 0.1); }
+  50% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.5), 0 0 50px rgba(255, 215, 0, 0.2); }
+}
+
+/* 状态指示灯脉冲 */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.5); }
+}
+
+/* 烟花粒子 */
+@keyframes firework-rise {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-30px) scale(0.5); }
+}
+
+/* 选项选中弹跳+光晕 */
+@keyframes option-select {
+  0% { transform: scale(1); box-shadow: 0 0 0 rgba(234, 179, 8, 0); }
+  30% { transform: scale(1.03); box-shadow: 0 0 20px rgba(234, 179, 8, 0.4), 0 0 40px rgba(234, 179, 8, 0.15); }
+  60% { transform: scale(0.98); }
+  100% { transform: scale(1); box-shadow: 0 0 8px rgba(234, 179, 8, 0.15); }
+}
+.animate-option-select { animation: option-select 0.4s ease-out; }
+
+.animate-lantern { animation: lantern-float 3s ease-in-out infinite; }
+.animate-lantern-alt { animation: lantern-float-alt 3.5s ease-in-out infinite; }
+.animate-sparkle { animation: sparkle 2s ease-in-out infinite; }
+.animate-win-glow { animation: win-glow 2s ease-in-out infinite; }
+.animate-pulse-dot { animation: pulse-dot 1.5s ease-in-out infinite; }
+
+/* 春联左右装饰条 */
+.couplet-border {
+  position: relative;
+}
+.couplet-border::before,
+.couplet-border::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 2px;
+  background: linear-gradient(to bottom, #fbbf24, #dc2626, #fbbf24);
+  opacity: 0.4;
+}
+.couplet-border::before { left: -1px; }
+.couplet-border::after { right: -1px; }
+
 /* 自定义滚动条 */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
