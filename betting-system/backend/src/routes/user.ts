@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import User from '../models/User';
 import { auth, adminOnly, AuthRequest } from '../middleware/auth';
+import { getSettings } from './settings';
 
 const router = Router();
 
@@ -10,6 +11,23 @@ router.get('/profile', auth, async (req: AuthRequest, res: Response) => {
     const user = await User.findById(req.userId).select('-password');
     if (!user) return res.status(404).json({ message: '用户不存在' });
     return res.json(user);
+  } catch {
+    return res.status(500).json({ message: '服务器错误' });
+  }
+});
+
+// GET /api/user/leaderboard - 排行榜（所有用户可访问）
+router.get('/leaderboard', auth, async (_req: AuthRequest, res: Response) => {
+  try {
+    const users = await User.find({ isAdmin: false })
+      .select('name coins wineGlasses rounds')
+      .sort({ coins: -1 });
+    const userCount = users.length;
+    const settings = await getSettings();
+    const settledWineGlasses = settings.settledWineGlasses || 0;
+    // 总奖池 = 参与人数 × 40万 + 已结算酒杯数 × 5万
+    const totalPrizePool = userCount * 400000 + settledWineGlasses * 50000;
+    return res.json({ users, totalPrizePool, userCount, settledWineGlasses });
   } catch {
     return res.status(500).json({ message: '服务器错误' });
   }

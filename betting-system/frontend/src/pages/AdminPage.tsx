@@ -60,10 +60,9 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
 
   // 设置表单
   const [editSettings, setEditSettings] = useState({
-    initialCoins: 200000,
+    initialCoins: 400000,
     minBet: 50000,
     maxBet: 10000000,
-    totalPrizePool: 10000000,
   });
 
   useEffect(() => {
@@ -72,7 +71,6 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
         initialCoins: settings.initialCoins,
         minBet: settings.minBet,
         maxBet: settings.maxBet,
-        totalPrizePool: settings.totalPrizePool,
       });
     }
   }, [settings]);
@@ -447,11 +445,13 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
           {settings && (
             <div className="p-3 rounded-xl bg-red-900/30 text-sm space-y-1">
               <div className="flex justify-between">
-                <span className="text-red-300/60">{t('currentPool')}:</span>
-                <span className={`font-semibold ${settings.gameOver ? 'text-red-400' : 'text-green-400'}`}>
-                  {(settings.currentPool / 10000).toFixed(0)}{t('wan')}
-                  {settings.gameOver && ` (${t('gameOver').split('!')[0]})`}
+                <span className="text-red-300/60">{t('totalPrizePool')}:</span>
+                <span className="font-semibold text-green-400">
+                  {(settings.totalPrizePool / 10000).toFixed(0)}{t('wan')}
                 </span>
+              </div>
+              <div className="text-xs text-red-400/40 mt-1">
+                = N × 40{t('wan')} + 🍷 × 5{t('wan')}
               </div>
             </div>
           )}
@@ -490,33 +490,14 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
                 className="w-full px-3 py-2 rounded-xl bg-red-900/40 border border-yellow-700/30 text-white focus:outline-none focus:border-yellow-500 text-sm"
               />
             </div>
-            <div>
-              <label className="text-xs text-red-300/60 mb-1 block">{t('totalPrizePool')} ({t('wan')})</label>
-              <input
-                type="number"
-                value={editSettings.totalPrizePool / 10000}
-                onChange={(e) => setEditSettings(prev => ({
-                  ...prev, totalPrizePool: (parseFloat(e.target.value) || 0) * 10000
-                }))}
-                className="w-full px-3 py-2 rounded-xl bg-red-900/40 border border-yellow-700/30 text-white focus:outline-none focus:border-yellow-500 text-sm"
-              />
-            </div>
           </div>
 
-          <div className="flex gap-2">
-            <button
-              onClick={handleSaveSettings}
-              className="flex-1 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-red-700 to-red-600 hover:from-red-600 hover:to-red-500 active:scale-95 text-sm"
-            >
-              {t('save')}
-            </button>
-            <button
-              onClick={handleResetPool}
-              className="px-4 py-2.5 rounded-xl font-semibold text-orange-400 bg-orange-500/20 border border-orange-500/30 hover:bg-orange-500/30 active:scale-95 text-sm"
-            >
-              {t('resetPool')}
-            </button>
-          </div>
+          <button
+            onClick={handleSaveSettings}
+            className="w-full py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-red-700 to-red-600 hover:from-red-600 hover:to-red-500 active:scale-95 text-sm"
+          >
+            {t('save')}
+          </button>
         </div>
       )}
     </div>

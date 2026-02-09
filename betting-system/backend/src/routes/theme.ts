@@ -43,11 +43,13 @@ router.delete('/:id', auth, adminOnly, async (req: AuthRequest, res: Response) =
     const theme = await Theme.findById(req.params.id);
     if (!theme) return res.status(404).json({ message: '主题不存在' });
 
-    // 如果主题还没结算，退还所有押注
+    // 如果主题还没结算，退还金币押注（酒杯押注无需退还）
     if (theme.status === 'open') {
       const bets = await Bet.find({ themeId: theme._id });
       for (const bet of bets) {
-        await User.findByIdAndUpdate(bet.userId, { $inc: { coins: bet.amount } });
+        if (!bet.useWineGlass) {
+          await User.findByIdAndUpdate(bet.userId, { $inc: { coins: bet.amount } });
+        }
       }
       await Bet.deleteMany({ themeId: theme._id });
     }
@@ -70,37 +72,43 @@ async function settleTheme(themeId: string, winnerOptionId: string, io: any) {
   if (!winnerOption) throw new Error('选项不存在');
 
   const allBets = await Bet.find({ themeId: theme._id });
-  const winnerBets = allBets.filter(b => b.optionId.toString() === winnerOptionId);
-  const loserBets = allBets.filter(b => b.optionId.toString() !== winnerOptionId);
 
-  // 计算奖励池（输家的押注总额）
-  const prizePool = loserBets.reduce((sum, b) => sum + b.amount, 0);
-  const winnerTotalBet = winnerBets.reduce((sum, b) => sum + b.amount, 0);
+  // 分离金币押注和酒杯押注
+  const coinBets = allBets.filter(b => !b.useWineGlass);
+  const wineGlassBets = allBets.filter(b => b.useWineGlass);
 
-  // 结算：赢家退还押注 + 按比例分配奖励池
-  for (const bet of winnerBets) {
+  // === 金币押注结算 ===
+  const winnerCoinBets = coinBets.filter(b => b.optionId.toString() === winnerOptionId);
+  const loserCoinBets = coinBets.filter(b => b.optionId.toString() !== winnerOptionId);
+
+  const prizePool = loserCoinBets.reduce((sum, b) => sum + b.amount, 0);
+  const winnerTotalBet = winnerCoinBets.reduce((sum, b) => sum + b.amount, 0);
+
+  // 赢家退还押注 + 按比例分配输家的押注
+  for (const bet of winnerCoinBets) {
     const ratio = winnerTotalBet > 0 ? bet.amount / winnerTotalBet : 0;
     const reward = Math.floor(bet.amount + prizePool * ratio);
     await User.findByIdAndUpdate(bet.userId, { $inc: { coins: reward } });
   }
 
-  // 如果没有赢家，退还所有人的押注
-  if (winnerBets.length === 0) {
-    for (const bet of loserBets) {
+  // 如果没有金币赢家，退还所有金币输家的押注
+  if (winnerCoinBets.length === 0 && loserCoinBets.length > 0) {
+    for (const bet of loserCoinBets) {
       await User.findByIdAndUpdate(bet.userId, { $inc: { coins: bet.amount } });
     }
   }
 
-  // 从总奖池中扣除（输家损失的金币从系统总奖池中减少）
+  // === 酒杯押注结算 ===
+  const wineGlassWinners = wineGlassBets.filter(b => b.optionId.toString() === winnerOptionId);
+  // 酒杯赢家获得5万金币
+  for (const bet of wineGlassWinners) {
+    await User.findByIdAndUpdate(bet.userId, { $inc: { coins: 50000 } });
+  }
+
+  // 记录已结算酒杯数（用于计算总奖池：参与人数×40万 + 酒杯数×5万）
   const settings = await getSettings();
-  if (allBets.length > 0) {
-    // 总奖池减少 = 输家损失的金额（即奖励池金额）
-    // 赢家之间的金币流转不影响总奖池，只有输家的损失从总奖池扣除
-    settings.currentPool -= prizePool;
-    if (settings.currentPool <= 0) {
-      settings.currentPool = 0;
-      settings.gameOver = true;
-    }
+  if (wineGlassBets.length > 0) {
+    settings.settledWineGlasses = (settings.settledWineGlasses || 0) + wineGlassBets.length;
     await settings.save();
   }
 
@@ -109,18 +117,28 @@ async function settleTheme(themeId: string, winnerOptionId: string, io: any) {
   theme.winnerOptionId = winnerOption._id;
   await theme.save();
 
+  // 计算动态奖池并推送
+  const userCount = await User.countDocuments({ isAdmin: false });
+  const dynamicPrizePool = userCount * 400000 + (settings.settledWineGlasses || 0) * 50000;
+  const settingsData = {
+    ...settings.toObject(),
+    totalPrizePool: dynamicPrizePool,
+    currentPool: dynamicPrizePool,
+  };
+
   io?.emit('themeUpdate');
   io?.emit('settled', { themeId: theme._id });
-  if (settings.gameOver) {
-    io?.emit('gameOver');
-  }
-  io?.emit('settingsUpdate', settings);
+  io?.emit('settingsUpdate', settingsData);
+
+  const winnerBets = allBets.filter(b => b.optionId.toString() === winnerOptionId);
+  const loserBets = allBets.filter(b => b.optionId.toString() !== winnerOptionId);
 
   return {
     message: '结算完成',
     prizePool,
     winnerCount: winnerBets.length,
     loserCount: loserBets.length,
+    wineGlassCount: wineGlassBets.length,
     winnerOptionName: winnerOption.name,
     gameOver: settings.gameOver,
   };

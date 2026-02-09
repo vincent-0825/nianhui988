@@ -146,7 +146,7 @@ export default function App() {
               )}
               {settings && (
                 <span className="text-green-400 text-xs">
-                  {t('prizePool')}: {(settings.currentPool / 10000).toFixed(0)}{t('wan')}
+                  {t('prizePool')}: {(settings.totalPrizePool / 10000).toFixed(0)}{t('wan')}
                 </span>
               )}
             </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getAllUsers } from '../services/api';
+import { getLeaderboard } from '../services/api';
 import { t } from '../services/i18n';
 import socket from '../services/socket';
 
@@ -11,24 +11,24 @@ interface UserInfo {
   rounds: number;
 }
 
-const TOTAL_PRIZE = 10000000; // 1000万
-
 export default function LeaderboardPage() {
   const [users, setUsers] = useState<UserInfo[]>([]);
+  const [totalPrizePool, setTotalPrizePool] = useState(0);
 
-  const fetchUsers = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     try {
-      const res = await getAllUsers();
-      setUsers(res.data);
+      const res = await getLeaderboard();
+      setUsers(res.data.users);
+      setTotalPrizePool(res.data.totalPrizePool);
     } catch { /* ignore */ }
   }, []);
 
-  useEffect(() => { fetchUsers(); }, [fetchUsers]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   useEffect(() => {
-    socket.on('settled', fetchUsers);
+    socket.on('settled', fetchData);
     return () => { socket.off('settled'); };
-  }, [fetchUsers]);
+  }, [fetchData]);
 
   // 按金币排序（降序）
   const sorted = [...users].sort((a, b) => b.coins - a.coins);
@@ -50,12 +50,20 @@ export default function LeaderboardPage() {
 
   return (
     <div className="py-4 space-y-4">
-      {/* 总计 */}
-      <div className="bg-red-950/40 rounded-2xl border border-yellow-800/30 p-4 text-center">
-        <p className="text-xs text-red-300/60">{t('totalCoinsAll')}</p>
-        <p className="text-2xl font-bold text-yellow-300 mt-1">
-          {(totalCoins / 10000).toFixed(0)}<span className="text-sm text-yellow-500">{t('wan')}</span>
-        </p>
+      {/* 总奖池 & 总金币 */}
+      <div className="bg-red-950/40 rounded-2xl border border-yellow-800/30 p-4 text-center space-y-2">
+        <div>
+          <p className="text-xs text-red-300/60">{t('prizePool')}（{t('totalUsers').replace('{count}', String(users.length))}）</p>
+          <p className="text-2xl font-bold text-green-400 mt-1">
+            {(totalPrizePool / 10000).toFixed(0)}<span className="text-sm text-green-500">{t('wan')}</span>
+          </p>
+        </div>
+        <div>
+          <p className="text-xs text-red-300/60">{t('totalCoinsAll')}</p>
+          <p className="text-xl font-bold text-yellow-300">
+            {(totalCoins / 10000).toFixed(0)}<span className="text-sm text-yellow-500">{t('wan')}</span>
+          </p>
+        </div>
       </div>
 
       {/* 排行表头 */}
@@ -73,7 +81,7 @@ export default function LeaderboardPage() {
       ) : (
         sorted.map((u, i) => {
           const proportion = totalCoins > 0 ? u.coins / totalCoins : 0;
-          const prize = proportion * TOTAL_PRIZE;
+          const prize = proportion * totalPrizePool;
           return (
             <div
               key={u._id}
@@ -109,7 +117,7 @@ export default function LeaderboardPage() {
 
       {/* 计算说明 */}
       <div className="text-center text-xs text-red-400/40 py-2">
-        {t('estimatedPrize')} = {t('proportion')} × 1000{t('wan')}
+        {t('prizePool')} = {t('totalUsers').replace('{count}', 'N')} × 40{t('wan')} + 🍷 × 5{t('wan')}
       </div>
     </div>
   );

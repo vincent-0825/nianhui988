@@ -33,6 +33,7 @@ export const login = (name: string, password?: string) =>
 // User
 export const getProfile = () => api.get('/user/profile');
 export const getAllUsers = () => api.get('/user/all');
+export const getLeaderboard = () => api.get('/user/leaderboard');
 export const giveCoins = (userId: string, amount: number) =>
   api.post(`/user/${userId}/coins`, { amount });
 
@@ -57,7 +58,7 @@ export const getThemeBets = (themeId: string) => api.get(`/bets/theme/${themeId}
 // Settings
 export const getSettings = () => api.get('/settings');
 export const updateSettings = (data: {
-  initialCoins?: number; minBet?: number; maxBet?: number; totalPrizePool?: number;
+  initialCoins?: number; minBet?: number; maxBet?: number;
 }) => api.put('/settings', data);
 export const resetPool = () => api.post('/settings/reset-pool');
 

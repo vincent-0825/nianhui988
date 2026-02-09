@@ -45,17 +45,19 @@ router.post('/', auth, async (req: AuthRequest, res: Response) => {
     if (!user) return res.status(404).json({ message: '用户不存在' });
 
     let useWineGlass = false;
+    let actualAmount = amount;
 
-    if (user.coins >= amount) {
+    if (user.coins === 0) {
+      // 金币为0时使用酒杯：1杯酒 = 5万金币（固定）
+      useWineGlass = true;
+      actualAmount = 50000;
+      user.wineGlasses += 1;
+    } else if (user.coins >= amount) {
       // 正常扣除金币
       user.coins -= amount;
     } else {
-      // 金币不足时：先用完剩余金币，不足部分用酒杯计数
-      useWineGlass = true;
-      const shortage = amount - user.coins;
-      const glassCount = Math.ceil(shortage / settings.minBet);
-      user.coins = 0;
-      user.wineGlasses += glassCount;
+      // 金币不足
+      return res.status(400).json({ message: '金币不足' });
     }
 
     // 增加参与轮次
@@ -66,7 +68,8 @@ router.post('/', auth, async (req: AuthRequest, res: Response) => {
       userId: req.userId,
       themeId,
       optionId,
-      amount,
+      amount: actualAmount,
+      useWineGlass,
     });
 
     // 实时推送押注更新

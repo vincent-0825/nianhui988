@@ -5,6 +5,7 @@ export interface IBet extends Document {
   themeId: Types.ObjectId;
   optionId: Types.ObjectId;
   amount: number;
+  useWineGlass: boolean;
   createdAt: Date;
 }
 
@@ -13,6 +14,7 @@ const BetSchema = new Schema<IBet>({
   themeId: { type: Schema.Types.ObjectId, ref: 'Theme', required: true },
   optionId: { type: Schema.Types.ObjectId, required: true },
   amount: { type: Number, required: true, min: 50000 },
+  useWineGlass: { type: Boolean, default: false },
 }, { timestamps: true });
 
 // 每个用户每个主题只能押注一次

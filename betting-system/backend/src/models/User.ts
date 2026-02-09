@@ -13,7 +13,7 @@ export interface IUser extends Document {
 const UserSchema = new Schema<IUser>({
   name: { type: String, required: true, unique: true, trim: true },
   password: { type: String },
-  coins: { type: Number, default: 200000 },
+  coins: { type: Number, default: 400000 },
   wineGlasses: { type: Number, default: 0 },
   rounds: { type: Number, default: 0 },
   isAdmin: { type: Boolean, default: false },

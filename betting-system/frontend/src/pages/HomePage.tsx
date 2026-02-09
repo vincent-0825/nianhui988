@@ -119,11 +119,14 @@ export default function HomePage({ user, updateUser, settings }: Props) {
 
   const handleBet = async (themeId: string) => {
     const optionId = selectedOptions[themeId];
-    const amount = getBetAmount(themeId);
+    // 酒杯模式固定5万，否则用选择的金额
+    const amount = user.coins === 0 ? 50000 : getBetAmount(themeId);
     if (!optionId) { toast.error(t('selectOption')); return; }
-    if (amount < minBet) { toast.error(`${t('minBetError')} ${minBet / 10000}${t('wan')}`); return; }
-    if (amount > maxBet) { toast.error(`${t('maxBetError')} ${maxBet / 10000}${t('wan')}`); return; }
-    if (user.coins > 0 && amount > user.coins) { toast.error(t('insufficientCoins')); return; }
+    if (user.coins > 0) {
+      if (amount < minBet) { toast.error(`${t('minBetError')} ${minBet / 10000}${t('wan')}`); return; }
+      if (amount > maxBet) { toast.error(`${t('maxBetError')} ${maxBet / 10000}${t('wan')}`); return; }
+      if (amount > user.coins) { toast.error(t('insufficientCoins')); return; }
+    }
 
     setLoading(true);
     try {
@@ -281,45 +284,58 @@ export default function HomePage({ user, updateUser, settings }: Props) {
                 {/* 押注操作 */}
                 {!isClosed && !hasBet && !settings?.gameOver && (
                   <div className="space-y-3 pt-2">
-                    <div className="flex items-center justify-center gap-3">
-                      <button
-                        onClick={() => handleDecrease(theme._id)}
-                        disabled={getBetAmount(theme._id) <= minBet}
-                        className="w-12 h-12 rounded-full bg-red-900/60 border border-yellow-700/30 text-yellow-300 text-2xl font-bold flex items-center justify-center hover:bg-red-800/60 active:scale-90 disabled:opacity-30"
-                      >−</button>
-                      <div className="flex-1 text-center">
-                        <div className="text-2xl font-bold text-yellow-300">
-                          {getBetAmount(theme._id) / 10000}<span className="text-base text-yellow-500">{t('wan')}</span>
+                    {user.coins === 0 ? (
+                      /* 酒杯模式：固定5万 */
+                      <div className="text-center py-2">
+                        <div className="text-2xl font-bold text-pink-400">
+                          🍷 5<span className="text-base text-pink-500">{t('wan')}</span>
                         </div>
-                        <div className="text-xs text-red-400/60 mt-0.5">{t('minBet')} {minBet / 10000} ~ {maxBet / 10000}{t('wan')}</div>
+                        <div className="text-xs text-red-400/60 mt-1">{t('wineGlassNote')}</div>
                       </div>
-                      <button
-                        onClick={() => handleIncrease(theme._id)}
-                        disabled={getBetAmount(theme._id) >= maxBet}
-                        className="w-12 h-12 rounded-full bg-red-900/60 border border-yellow-700/30 text-yellow-300 text-2xl font-bold flex items-center justify-center hover:bg-red-800/60 active:scale-90 disabled:opacity-30"
-                      >+</button>
-                    </div>
-
-                    <div className="flex gap-2 justify-center flex-wrap">
-                      {[5, 10, 20, 50].map(n => {
-                        const val = n * 10000;
-                        if (val > maxBet || val < minBet) return null;
-                        return (
+                    ) : (
+                      /* 金币模式：+/- 选择器 */
+                      <>
+                        <div className="flex items-center justify-center gap-3">
                           <button
-                            key={n}
-                            onClick={() => setBetAmounts(prev => ({ ...prev, [theme._id]: val }))}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border active:scale-95 ${
-                              getBetAmount(theme._id) === val
-                                ? 'bg-yellow-600/30 text-yellow-300 border-yellow-500/50'
-                                : 'bg-red-900/30 text-red-300/70 border-red-800/30 hover:border-yellow-700/40'
-                            }`}
-                          >{n}{t('wan')}</button>
-                        );
-                      })}
-                      <button onClick={() => handleAllIn(theme._id)} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-orange-600/20 text-orange-400 border border-orange-500/30 active:scale-95">
-                        {t('allIn')}
-                      </button>
-                    </div>
+                            onClick={() => handleDecrease(theme._id)}
+                            disabled={getBetAmount(theme._id) <= minBet}
+                            className="w-12 h-12 rounded-full bg-red-900/60 border border-yellow-700/30 text-yellow-300 text-2xl font-bold flex items-center justify-center hover:bg-red-800/60 active:scale-90 disabled:opacity-30"
+                          >−</button>
+                          <div className="flex-1 text-center">
+                            <div className="text-2xl font-bold text-yellow-300">
+                              {getBetAmount(theme._id) / 10000}<span className="text-base text-yellow-500">{t('wan')}</span>
+                            </div>
+                            <div className="text-xs text-red-400/60 mt-0.5">{t('minBet')} {minBet / 10000} ~ {maxBet / 10000}{t('wan')}</div>
+                          </div>
+                          <button
+                            onClick={() => handleIncrease(theme._id)}
+                            disabled={getBetAmount(theme._id) >= maxBet}
+                            className="w-12 h-12 rounded-full bg-red-900/60 border border-yellow-700/30 text-yellow-300 text-2xl font-bold flex items-center justify-center hover:bg-red-800/60 active:scale-90 disabled:opacity-30"
+                          >+</button>
+                        </div>
+
+                        <div className="flex gap-2 justify-center flex-wrap">
+                          {[5, 10, 20, 50].map(n => {
+                            const val = n * 10000;
+                            if (val > maxBet || val < minBet) return null;
+                            return (
+                              <button
+                                key={n}
+                                onClick={() => setBetAmounts(prev => ({ ...prev, [theme._id]: val }))}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border active:scale-95 ${
+                                  getBetAmount(theme._id) === val
+                                    ? 'bg-yellow-600/30 text-yellow-300 border-yellow-500/50'
+                                    : 'bg-red-900/30 text-red-300/70 border-red-800/30 hover:border-yellow-700/40'
+                                }`}
+                              >{n}{t('wan')}</button>
+                            );
+                          })}
+                          <button onClick={() => handleAllIn(theme._id)} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-orange-600/20 text-orange-400 border border-orange-500/30 active:scale-95">
+                            {t('allIn')}
+                          </button>
+                        </div>
+                      </>
+                    )}
 
                     <div className="flex gap-2">
                       <button onClick={() => handleSkip(theme._id)} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-red-400/70 bg-red-950/40 border border-red-800/30 active:scale-95">
