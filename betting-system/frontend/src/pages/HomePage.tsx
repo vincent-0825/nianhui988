@@ -127,10 +127,10 @@ export default function HomePage({ user, updateUser, settings }: Props) {
 
   const handleBet = async (themeId: string) => {
     const optionId = selectedOptions[themeId];
-    // 酒杯模式固定5万，否则用选择的金额
-    const amount = user.coins === 0 ? 50000 : getBetAmount(themeId);
+    // 酒杯模式固定5万，余额不足最低投注时 all-in，否则用选择的金额
+    const amount = user.coins === 0 ? 50000 : user.coins < minBet ? user.coins : getBetAmount(themeId);
     if (!optionId) { toast.error(t('selectOption')); return; }
-    if (user.coins > 0) {
+    if (user.coins >= minBet) {
       if (amount < minBet) { toast.error(`${t('minBetError')} ${minBet / 10000}${t('wan')}`); return; }
       if (amount > maxBet) { toast.error(`${t('maxBetError')} ${maxBet / 10000}${t('wan')}`); return; }
       if (amount > user.coins) { toast.error(t('insufficientCoins')); return; }
@@ -359,6 +359,13 @@ export default function HomePage({ user, updateUser, settings }: Props) {
                           🍷 5<span className="text-base text-pink-500">{t('wan')}</span>
                         </div>
                         <div className="text-xs text-red-400/60 mt-1">{t('wineGlassNote')}</div>
+                      </div>
+                    ) : user.coins < minBet ? (
+                      /* 余额不足最低投注：自动 all-in */
+                      <div className="text-center py-2">
+                        <div className="text-2xl font-bold bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-200 bg-clip-text text-transparent">
+                          {t('allIn')} {formatCoins(user.coins)}
+                        </div>
                       </div>
                     ) : (
                       /* 金币模式：滑轨选择器 */

@@ -20,8 +20,8 @@ router.post('/', auth, async (req: AuthRequest, res: Response) => {
     if (!themeId || !optionId || !amount) {
       return res.status(400).json({ message: '参数不完整' });
     }
-    if (typeof amount !== 'number' || amount < settings.minBet) {
-      return res.status(400).json({ message: `最小押注${settings.minBet / 10000}万金币` });
+    if (typeof amount !== 'number' || amount <= 0) {
+      return res.status(400).json({ message: '押注金额无效' });
     }
     if (amount > settings.maxBet) {
       return res.status(400).json({ message: `最大押注${settings.maxBet / 10000}万金币` });
@@ -48,11 +48,15 @@ router.post('/', auth, async (req: AuthRequest, res: Response) => {
     let actualAmount = amount;
 
     if (user.coins === 0) {
+      // 酒杯模式
       useWineGlass = true;
       actualAmount = 50000;
-    } else if (user.coins >= amount) {
-      // 金币充足
-    } else {
+    } else if (user.coins < settings.minBet) {
+      // 余额不足最低投注，强制 all-in
+      actualAmount = user.coins;
+    } else if (amount < settings.minBet) {
+      return res.status(400).json({ message: `最小押注${settings.minBet / 10000}万金币` });
+    } else if (user.coins < amount) {
       return res.status(400).json({ message: '金币不足' });
     }
 
