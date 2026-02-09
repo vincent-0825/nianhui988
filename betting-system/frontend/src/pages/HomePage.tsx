@@ -294,6 +294,7 @@ export default function HomePage({ user, updateUser, settings }: Props) {
 
             {isExpanded && (
               <div className="px-5 pb-5 space-y-3">
+                <div className="h-px bg-gradient-to-r from-transparent via-yellow-600/30 to-transparent -mt-1 mb-1" />
                 {theme.options.map(option => {
                   const optStat = themeStat?.stats?.find(s => s.optionId === option._id);
                   const isWinner = isClosed && theme.winnerOptionId === option._id;
@@ -345,8 +346,8 @@ export default function HomePage({ user, updateUser, settings }: Props) {
                 })}
 
                 {themeStat && themeStat.totalAmount > 0 && (
-                  <div className="text-center text-sm text-red-300/80 py-1">
-                    {t('prizePool')}: <span className="text-yellow-400 font-semibold">{formatCoins(themeStat.totalAmount)}</span> {t('coins')}
+                  <div className="text-center text-sm py-2 px-3 rounded-lg bg-gradient-to-r from-yellow-900/10 via-yellow-800/15 to-yellow-900/10 border border-yellow-700/20">
+                    <span className="text-yellow-500/70">✦</span> {t('prizePool')}: <span className="text-yellow-300 font-bold">{formatCoins(themeStat.totalAmount)}</span> {t('coins')} <span className="text-yellow-500/70">✦</span>
                   </div>
                 )}
 
@@ -368,18 +369,18 @@ export default function HomePage({ user, updateUser, settings }: Props) {
                           <button
                             onClick={() => handleDecrease(theme._id)}
                             disabled={getBetAmount(theme._id) <= minBet}
-                            className="w-12 h-12 rounded-full bg-red-900/60 border border-yellow-700/30 text-yellow-300 text-2xl font-bold flex items-center justify-center hover:bg-red-800/60 active:scale-90 disabled:opacity-30"
+                            className="w-12 h-12 rounded-full bg-gradient-to-br from-red-900/60 to-red-800/60 border-2 border-yellow-600/40 text-yellow-300 text-2xl font-bold flex items-center justify-center hover:bg-red-800/60 active:scale-90 disabled:opacity-30 shadow-md shadow-yellow-900/10"
                           >−</button>
                           <div className="flex-1 text-center">
-                            <div className="text-2xl font-bold text-yellow-300">
-                              {getBetAmount(theme._id) / 10000}<span className="text-base text-yellow-500">{t('wan')}</span>
+                            <div className="text-3xl font-bold bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-200 bg-clip-text text-transparent">
+                              {getBetAmount(theme._id) / 10000}<span className="text-lg text-yellow-500">{t('wan')}</span>
                             </div>
-                            <div className="text-xs text-red-400/60 mt-0.5">{t('minBet')} {minBet / 10000} ~ {maxBet / 10000}{t('wan')}</div>
+                            <div className="text-xs text-yellow-600/50 mt-0.5">{t('minBet')} {minBet / 10000} ~ {maxBet / 10000}{t('wan')}</div>
                           </div>
                           <button
                             onClick={() => handleIncrease(theme._id)}
                             disabled={getBetAmount(theme._id) >= maxBet}
-                            className="w-12 h-12 rounded-full bg-red-900/60 border border-yellow-700/30 text-yellow-300 text-2xl font-bold flex items-center justify-center hover:bg-red-800/60 active:scale-90 disabled:opacity-30"
+                            className="w-12 h-12 rounded-full bg-gradient-to-br from-red-900/60 to-red-800/60 border-2 border-yellow-600/40 text-yellow-300 text-2xl font-bold flex items-center justify-center hover:bg-red-800/60 active:scale-90 disabled:opacity-30 shadow-md shadow-yellow-900/10"
                           >+</button>
                         </div>
 
@@ -399,19 +400,19 @@ export default function HomePage({ user, updateUser, settings }: Props) {
                               >{n}{t('wan')}</button>
                             );
                           })}
-                          <button onClick={() => handleAllIn(theme._id)} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-orange-600/20 text-orange-400 border border-orange-500/30 active:scale-95">
+                          <button onClick={() => handleAllIn(theme._id)} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-yellow-600/20 to-orange-600/20 text-yellow-300 border border-yellow-500/40 active:scale-95 shadow-sm shadow-yellow-900/10">
                             {t('allIn')}
                           </button>
                         </div>
                       </>
                     )}
 
-                    <div className="flex gap-2">
-                      <button onClick={() => handleSkip(theme._id)} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-red-400/70 bg-red-950/40 border border-red-800/30 active:scale-95">
+                    <div className="flex gap-3 pt-1">
+                      <button onClick={() => handleSkip(theme._id)} className="flex-1 py-3 rounded-xl text-sm font-semibold text-red-400/60 bg-red-950/50 border border-red-800/30 active:scale-95">
                         {t('skipRound')}
                       </button>
-                      <button onClick={() => handleBet(theme._id)} disabled={loading} className="flex-[2] py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-red-700 to-red-600 hover:from-red-600 hover:to-red-500 disabled:opacity-50 active:scale-95 border border-yellow-600/20 shadow-lg">
-                        {user.coins === 0 ? `🍷 ${t('bet')}` : t('bet')}
+                      <button onClick={() => handleBet(theme._id)} disabled={loading} className="flex-[2] py-3 rounded-xl text-base font-bold text-yellow-100 bg-gradient-to-r from-red-700 via-red-600 to-red-700 hover:from-red-600 hover:via-red-500 hover:to-red-600 disabled:opacity-50 active:scale-95 border border-yellow-500/40 shadow-lg shadow-red-900/30">
+                        {user.coins === 0 ? `🍷 ${t('bet')}` : `✦ ${t('bet')} ✦`}
                       </button>
                     </div>
                   </div>

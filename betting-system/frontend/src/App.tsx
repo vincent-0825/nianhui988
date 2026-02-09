@@ -154,7 +154,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 pb-20">
+      <main className="max-w-lg mx-auto px-4 pb-24">
         {settings?.gameOver && (
           <div className="mt-4 p-4 rounded-2xl bg-red-800/30 border border-yellow-600/30 text-center text-yellow-300 font-semibold">
             {t('gameOver')}
@@ -172,28 +172,31 @@ export default function App() {
 
       {/* 底部导航栏 */}
       {page !== 'admin' && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-red-950/95 via-red-900/95 to-red-950/95 backdrop-blur-md border-t border-yellow-700/40 z-50 shadow-lg shadow-red-950/50">
-          <div className="max-w-lg mx-auto flex">
-            <button
-              onClick={() => setPage('home')}
-              className={`flex-1 py-3 text-center text-sm font-semibold transition-all ${
-                page === 'home'
-                  ? 'text-yellow-300 border-t-2 border-yellow-400 bg-yellow-500/5'
-                  : 'text-red-400/60'
-              }`}
-            >
-              🎲 {t('bet')}
-            </button>
-            <button
-              onClick={() => setPage('leaderboard')}
-              className={`flex-1 py-3 text-center text-sm font-semibold transition-all ${
-                page === 'leaderboard'
-                  ? 'text-yellow-300 border-t-2 border-yellow-400 bg-yellow-500/5'
-                  : 'text-red-400/60'
-              }`}
-            >
-              🏆 {t('leaderboard')}
-            </button>
+        <nav className="fixed bottom-0 left-0 right-0 z-50">
+          <div className="bg-gradient-to-r from-yellow-600/20 via-yellow-500/10 to-yellow-600/20 h-px" />
+          <div className="bg-gradient-to-r from-red-950/98 via-red-900/98 to-red-950/98 backdrop-blur-md shadow-[0_-4px_20px_rgba(0,0,0,0.3)]">
+            <div className="max-w-lg mx-auto flex gap-3 px-4 py-2.5">
+              <button
+                onClick={() => setPage('home')}
+                className={`flex-1 py-3 rounded-xl text-center text-base font-bold transition-all active:scale-95 ${
+                  page === 'home'
+                    ? 'text-yellow-200 bg-gradient-to-r from-yellow-600/25 via-yellow-500/15 to-yellow-600/25 border border-yellow-500/40 shadow-md shadow-yellow-900/20'
+                    : 'text-red-400/50 bg-red-950/30 border border-red-800/20'
+                }`}
+              >
+                🎲 {t('bet')}
+              </button>
+              <button
+                onClick={() => setPage('leaderboard')}
+                className={`flex-1 py-3 rounded-xl text-center text-base font-bold transition-all active:scale-95 ${
+                  page === 'leaderboard'
+                    ? 'text-yellow-200 bg-gradient-to-r from-yellow-600/25 via-yellow-500/15 to-yellow-600/25 border border-yellow-500/40 shadow-md shadow-yellow-900/20'
+                    : 'text-red-400/50 bg-red-950/30 border border-red-800/20'
+                }`}
+              >
+                🏆 {t('leaderboard')}
+              </button>
+            </div>
           </div>
         </nav>
       )}
