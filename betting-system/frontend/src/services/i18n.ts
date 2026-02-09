@@ -110,6 +110,42 @@ const zh = {
   wonLabel: '赢了',
   lostLabel: '未中奖',
   noBetLabel: '未参与',
+  rules: '规则',
+  rulesTitle: '游戏规则',
+  rulesClose: '我知道了',
+  rulesContent: `【基本规则】
+每位玩家初始获得 40万 金币，在管理员创建的押注主题中选择你认为正确的选项进行押注。
+
+【押注规则】
+• 每个主题只能押注一次，押注后不可更改
+• 押注金额范围：最低 5万，最高 1000万
+• 以 5万 为最小单位递增
+• 可选择"全压"一键押上所有金币（不超过上限）
+• 可选择"跳过本轮"不参与当前主题
+
+【酒杯模式 🍷】
+• 当金币用完（为0）时，自动进入酒杯模式
+• 酒杯模式下每次押注固定 5万，不扣除金币
+• 每次酒杯押注记录 1 个酒杯
+• 酒杯数量代表"罚酒杯数"，年会现场兑现
+
+【开奖方式】
+• 管理员指定：管理员选择正确答案
+• 系统随机：系统随机抽取一个选项作为赢家
+
+【结算规则】
+• 押错的金币汇入该主题奖池
+• 押对者按各自押注金额比例瓜分奖池
+• 计算公式：返还原押注 + 奖池 × (你的押注 ÷ 所有赢家押注总额)
+• 酒杯模式押对者额外获得 5万 金币奖励
+• 若无人押中正确选项，所有金币原路退还
+
+【排行榜 & 奖金】
+• 排行榜按金币数量降序，显示前 25 名
+• 固定奖金等级：
+  🥇 第1名：300万  🥈 第2名：150万  🥉 第3名：100万
+  第4-10名：各50万  第11-25名：各10万
+• 总奖池 = 全员金币总额`,
 };
 
 const en: typeof zh = {
@@ -219,6 +255,42 @@ const en: typeof zh = {
   wonLabel: 'Won',
   lostLabel: 'Lost',
   noBetLabel: 'No Bet',
+  rules: 'Rules',
+  rulesTitle: 'Game Rules',
+  rulesClose: 'Got it',
+  rulesContent: `[Basic Rules]
+Each player starts with 400K coins. Bet on the option you think is correct in each topic created by the admin.
+
+[Betting Rules]
+• Each topic can only be bet once; bets cannot be changed
+• Bet range: min 50K, max 10,000K
+• Minimum increment: 50K
+• "All In" button bets all your coins (up to max limit)
+• You can "Skip" any topic you don't want to bet on
+
+[Wine Glass Mode 🍷]
+• When your coins reach 0, you enter Wine Glass Mode
+• Each bet is fixed at 50K, no coins deducted
+• Each wine glass bet records 1 glass
+• Glasses represent "penalty drinks" to be fulfilled at the party
+
+[Settlement Methods]
+• Admin Pick: Admin selects the correct answer
+• Random Draw: System randomly picks a winning option
+
+[Payout Rules]
+• Losing bets go into the topic's prize pool
+• Winners share the pool proportionally based on bet amounts
+• Formula: Original bet + Pool × (Your bet ÷ Total winning bets)
+• Wine glass winners receive an extra 50K coin bonus
+• If no one picked the winner, all bets are fully refunded
+
+[Leaderboard & Prizes]
+• Leaderboard shows top 25 players ranked by coins
+• Fixed prize tiers:
+  🥇 1st: 3,000K  🥈 2nd: 1,500K  🥉 3rd: 1,000K
+  4th-10th: 500K each  11th-25th: 100K each
+• Total Prize Pool = Sum of all players' coins`,
 };
 
 const translations = { zh, en } as const;

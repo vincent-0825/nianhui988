@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import AdminPage from './pages/AdminPage';
 import LeaderboardPage from './pages/LeaderboardPage';
+import RulesModal from './pages/RulesModal';
 import { t, getLang, setLang, onLangChange } from './services/i18n';
 import { getSettings as fetchSettings } from './services/api';
 import socket from './services/socket';
@@ -33,6 +34,7 @@ export default function App() {
   const [page, setPage] = useState<Page>('home');
   const [lang, setLangState] = useState(getLang());
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [showRules, setShowRules] = useState(false);
 
   useEffect(() => {
     return onLangChange(() => setLangState(getLang()));
@@ -109,6 +111,12 @@ export default function App() {
             </h1>
             <div className="flex items-center gap-2">
               <button
+                onClick={() => setShowRules(true)}
+                className="px-2 py-1 text-xs rounded-full bg-yellow-600/20 text-yellow-400 border border-yellow-500/30"
+              >
+                📜 {t('rules')}
+              </button>
+              <button
                 onClick={toggleLang}
                 className="px-2 py-1 text-xs rounded-full bg-red-900/50 text-yellow-300 border border-yellow-700/30"
               >
@@ -169,6 +177,9 @@ export default function App() {
           <HomePage user={user} updateUser={updateUser} settings={settings} />
         )}
       </main>
+
+      {/* 规则弹窗 */}
+      {showRules && <RulesModal onClose={() => setShowRules(false)} />}
 
       {/* 底部导航栏 */}
       {page !== 'admin' && (
