@@ -45,6 +45,9 @@ export const createTheme = (data: {
   title: string; description: string; options: string[]; settlementMode: string;
 }) => api.post('/themes', data);
 export const startTheme = (id: string) => api.post(`/themes/${id}/start`);
+export const updateTheme = (id: string, data: {
+  title?: string; description?: string; options?: { _id?: string; name: string }[];
+}) => api.put(`/themes/${id}`, data);
 export const deleteTheme = (id: string) => api.delete(`/themes/${id}`);
 export const settleTheme = (id: string, winnerOptionId: string) =>
   api.post(`/themes/${id}/settle`, { winnerOptionId });

@@ -117,15 +117,12 @@ export default function HomePage({ user, updateUser, settings }: Props) {
 
   const getBetAmount = (themeId: string) => betAmounts[themeId] || minBet;
 
-  const handleIncrease = (themeId: string) => {
+  const handleSliderChange = (themeId: string, value: number) => {
+    // 对齐到5万档位
+    const aligned = Math.round(value / STEP) * STEP;
     const upperLimit = Math.min(maxBet, user.coins);
-    const next = Math.min(getBetAmount(themeId) + STEP, upperLimit);
-    setBetAmounts(prev => ({ ...prev, [themeId]: next }));
-  };
-
-  const handleDecrease = (themeId: string) => {
-    const next = Math.max(getBetAmount(themeId) - STEP, minBet);
-    setBetAmounts(prev => ({ ...prev, [themeId]: next }));
+    const clamped = Math.max(minBet, Math.min(aligned, upperLimit));
+    setBetAmounts(prev => ({ ...prev, [themeId]: clamped }));
   };
 
   const handleBet = async (themeId: string) => {
@@ -364,29 +361,32 @@ export default function HomePage({ user, updateUser, settings }: Props) {
                         <div className="text-xs text-red-400/60 mt-1">{t('wineGlassNote')}</div>
                       </div>
                     ) : (
-                      /* 金币模式：+/- 选择器 */
+                      /* 金币模式：滑轨选择器 */
                       <>
-                        <div className="flex items-center justify-center gap-3">
-                          <button
-                            onClick={() => handleDecrease(theme._id)}
-                            disabled={getBetAmount(theme._id) <= minBet}
-                            className="w-12 h-12 rounded-full bg-gradient-to-br from-red-900/60 to-red-800/60 border-2 border-yellow-600/40 text-yellow-300 text-2xl font-bold flex items-center justify-center hover:bg-red-800/60 active:scale-90 disabled:opacity-30 shadow-md shadow-yellow-900/10"
-                          >−</button>
-                          <div className="flex-1 text-center">
-                            <div className="text-3xl font-bold bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-200 bg-clip-text text-transparent">
-                              {getBetAmount(theme._id) / 10000}<span className="text-lg text-yellow-500">{t('wan')}</span>
-                            </div>
-                            <div className="text-xs text-yellow-600/50 mt-0.5">{t('minBet')} {minBet / 10000} ~ {maxBet / 10000}{t('wan')}</div>
+                        <div className="text-center">
+                          <div className="text-3xl font-bold bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-200 bg-clip-text text-transparent">
+                            {getBetAmount(theme._id) / 10000}<span className="text-lg text-yellow-500">{t('wan')}</span>
                           </div>
-                          <button
-                            onClick={() => handleIncrease(theme._id)}
-                            disabled={getBetAmount(theme._id) >= Math.min(maxBet, user.coins)}
-                            className="w-12 h-12 rounded-full bg-gradient-to-br from-red-900/60 to-red-800/60 border-2 border-yellow-600/40 text-yellow-300 text-2xl font-bold flex items-center justify-center hover:bg-red-800/60 active:scale-90 disabled:opacity-30 shadow-md shadow-yellow-900/10"
-                          >+</button>
+                        </div>
+
+                        <div className="px-1">
+                          <input
+                            type="range"
+                            className="bet-slider"
+                            min={minBet}
+                            max={Math.min(maxBet, user.coins)}
+                            step={STEP}
+                            value={getBetAmount(theme._id)}
+                            onChange={(e) => handleSliderChange(theme._id, Number(e.target.value))}
+                          />
+                          <div className="flex justify-between text-xs text-yellow-600/50 mt-1 px-0.5">
+                            <span>{minBet / 10000}{t('wan')}</span>
+                            <span>{Math.min(maxBet, user.coins) / 10000}{t('wan')}</span>
+                          </div>
                         </div>
 
                         <div className="flex gap-2 justify-center flex-wrap">
-                          {[5, 10, 20, 50].map(n => {
+                          {[5, 10, 25, 50].map(n => {
                             const val = n * 10000;
                             if (val > maxBet || val < minBet || val > user.coins) return null;
                             return (

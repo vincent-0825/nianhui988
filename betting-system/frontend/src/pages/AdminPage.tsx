@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import {
   getAllThemes, createTheme, deleteTheme, settleTheme, randomSettleTheme,
-  startTheme, getWineGlassStats,
+  startTheme, getWineGlassStats, updateTheme,
   getAllUsers, giveCoins, deleteUser, getThemeBets,
   updateSettings, resetPool,
 } from '../services/api';
@@ -66,6 +66,12 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
 
   // 发放金币
   const [coinAmounts, setCoinAmounts] = useState<Record<string, number>>({});
+
+  // 编辑主题
+  const [editingThemeId, setEditingThemeId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [editOptions, setEditOptions] = useState<{ _id?: string; name: string }[]>([]);
 
   // 设置表单
   const [editSettings, setEditSettings] = useState({
@@ -295,6 +301,38 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
     }
   };
 
+  const startEditTheme = (theme: Theme) => {
+    setEditingThemeId(theme._id);
+    setEditTitle(theme.title);
+    setEditDesc(theme.description);
+    setEditOptions(theme.options.map(o => ({ _id: o._id, name: o.name })));
+  };
+
+  const cancelEditTheme = () => {
+    setEditingThemeId(null);
+  };
+
+  const handleSaveTheme = async () => {
+    if (loading || !editingThemeId) return;
+    const opts = editOptions.filter(o => o.name.trim());
+    if (!editTitle.trim() || opts.length < 2) return;
+    setLoading(true);
+    try {
+      await updateTheme(editingThemeId, {
+        title: editTitle.trim(),
+        description: editDesc.trim(),
+        options: opts,
+      });
+      toast.success(t('editSuccess'));
+      setEditingThemeId(null);
+      fetchThemes();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || t('serverError'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const addOption = () => setNewOptions([...newOptions, '']);
   const removeOption = (i: number) => {
     if (newOptions.length <= 2) return;
@@ -408,97 +446,163 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
           {/* 主题列表 */}
           {themes.map(theme => (
             <div key={theme._id} className="bg-red-950/40 rounded-2xl border border-yellow-800/30 p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusBadge(theme.status)}`}>
-                    {getStatusText(theme.status)}
-                  </span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-red-900/40 text-red-300/60">
-                    {theme.settlementMode === 'random' ? `🎲 ${t('systemRandom')}` : t('adminPick')}
-                  </span>
-                  <h4 className="font-semibold">{theme.title}</h4>
-                </div>
-                <button onClick={() => handleDelete(theme._id)} className="text-red-400 text-xs hover:text-red-300">
-                  {t('delete')}
-                </button>
-              </div>
-
-              <div className="flex gap-2 flex-wrap">
-                {/* 开始按钮（仅pending状态） */}
-                {theme.status === 'pending' && (
-                  <button
-                    onClick={() => handleStartTheme(theme._id)}
-                    className="text-xs px-3 py-1 rounded-full bg-green-600/20 text-green-400 border border-green-500/30 hover:bg-green-600/30"
-                  >
-                    ▶ {t('startTheme')}
-                  </button>
-                )}
-                <button onClick={() => fetchThemeStats(theme._id)} className="text-xs text-yellow-400 hover:text-yellow-300">
-                  {t('refreshStats')}
-                </button>
-                {/* 酒杯统计按钮 */}
-                <button onClick={() => fetchWineGlassStats(theme._id)} className="text-xs text-pink-400 hover:text-pink-300">
-                  🍷 {t('wineGlassRanking')}
-                </button>
-                {theme.status === 'open' && theme.settlementMode === 'random' && (
-                  <button
-                    onClick={() => handleRandomSettle(theme._id)}
-                    className="text-xs text-orange-400 hover:text-orange-300"
-                  >
-                    🎲 {t('randomSettle')}
-                  </button>
-                )}
-              </div>
-
-              {/* 酒杯排行 */}
-              {wineGlassStats[theme._id] && wineGlassStats[theme._id].total > 0 && (
-                <div className="bg-pink-950/30 rounded-xl border border-pink-800/30 p-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-pink-400">🍷 {t('wineGlassRanking')}</span>
-                    <span className="text-xs text-pink-400/60">{t('total')}: {wineGlassStats[theme._id].total} {t('glasses')}</span>
-                  </div>
-                  {wineGlassStats[theme._id].stats.map((s, i) => (
-                    <div key={i} className="flex items-center justify-between text-sm py-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-pink-400/60 w-6">{i + 1}.</span>
-                        <span className="text-yellow-50">{s.name}</span>
-                      </div>
-                      <span className="text-pink-400 font-semibold">🍷 {s.count}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* 选项 & 结算按钮 */}
-              <div className="space-y-2">
-                {theme.options.map(opt => {
-                  const stat = themeStats[theme._id]?.stats?.find((s: any) => s.optionId === opt._id);
-                  const isWinner = theme.winnerOptionId === opt._id;
-                  return (
-                    <div key={opt._id} className={`flex items-center justify-between p-3 rounded-xl ${
-                      isWinner ? 'bg-green-500/20 border border-green-500/50' : 'bg-red-900/30'
-                    }`}>
-                      <div>
-                        <span className="text-sm">{opt.name}</span>
-                        {stat && (
-                          <span className="text-xs text-red-300/60 ml-2">
-                            {stat.betCount}{t('persons')} / {(stat.totalAmount / 10000).toFixed(0)}{t('wan')} / {stat.winRate}%
-                          </span>
+              {editingThemeId === theme._id ? (
+                /* 编辑模式 */
+                <div className="space-y-3">
+                  <input
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl bg-red-900/40 border border-yellow-700/30 text-white placeholder-red-400/40 focus:outline-none focus:border-yellow-500 text-sm"
+                    placeholder={t('themeTitle')}
+                  />
+                  <input
+                    value={editDesc}
+                    onChange={(e) => setEditDesc(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl bg-red-900/40 border border-yellow-700/30 text-white placeholder-red-400/40 focus:outline-none focus:border-yellow-500 text-sm"
+                    placeholder={t('description')}
+                  />
+                  <div className="space-y-2">
+                    <p className="text-xs text-red-300/60">{t('options')}:</p>
+                    {editOptions.map((opt, i) => (
+                      <div key={opt._id || `new-${i}`} className="flex gap-2">
+                        <input
+                          value={opt.name}
+                          onChange={(e) => {
+                            const copy = [...editOptions];
+                            copy[i] = { ...copy[i], name: e.target.value };
+                            setEditOptions(copy);
+                          }}
+                          className="flex-1 px-3 py-2 rounded-xl bg-red-900/40 border border-yellow-700/30 text-white placeholder-red-400/40 focus:outline-none focus:border-yellow-500 text-sm"
+                          placeholder={`${t('options')} ${i + 1}`}
+                        />
+                        {editOptions.length > 2 && (
+                          <button
+                            onClick={() => setEditOptions(editOptions.filter((_, idx) => idx !== i))}
+                            className="text-red-400 text-sm px-2"
+                          >✕</button>
                         )}
-                        {isWinner && <span className="text-green-400 text-xs ml-2">&#10003; {t('winner')}</span>}
                       </div>
-                      {theme.status === 'open' && theme.settlementMode === 'admin' && (
-                        <button
-                          onClick={() => handleSettle(theme._id, opt._id)}
-                          className="px-3 py-1 text-xs rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30"
-                        >
-                          {t('selectWinner')}
-                        </button>
-                      )}
+                    ))}
+                    <button
+                      onClick={() => setEditOptions([...editOptions, { name: '' }])}
+                      className="text-sm text-yellow-400 hover:text-yellow-300"
+                    >
+                      {t('addOption')}
+                    </button>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={cancelEditTheme}
+                      className="flex-1 py-2 rounded-xl text-sm font-semibold text-red-300/60 bg-red-900/40 active:scale-95"
+                    >
+                      {t('cancel')}
+                    </button>
+                    <button
+                      onClick={handleSaveTheme}
+                      disabled={loading}
+                      className="flex-1 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-red-700 to-red-600 active:scale-95 disabled:opacity-50"
+                    >
+                      {loading ? t('loading') : t('editSave')}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* 正常显示模式 */
+                <>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusBadge(theme.status)}`}>
+                        {getStatusText(theme.status)}
+                      </span>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-red-900/40 text-red-300/60">
+                        {theme.settlementMode === 'random' ? `🎲 ${t('systemRandom')}` : t('adminPick')}
+                      </span>
+                      <h4 className="font-semibold">{theme.title}</h4>
                     </div>
-                  );
-                })}
-              </div>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => startEditTheme(theme)} className="text-yellow-400 text-xs hover:text-yellow-300">
+                        {t('editTheme')}
+                      </button>
+                      <button onClick={() => handleDelete(theme._id)} className="text-red-400 text-xs hover:text-red-300">
+                        {t('delete')}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 flex-wrap">
+                    {theme.status === 'pending' && (
+                      <button
+                        onClick={() => handleStartTheme(theme._id)}
+                        className="text-xs px-3 py-1 rounded-full bg-green-600/20 text-green-400 border border-green-500/30 hover:bg-green-600/30"
+                      >
+                        ▶ {t('startTheme')}
+                      </button>
+                    )}
+                    <button onClick={() => fetchThemeStats(theme._id)} className="text-xs text-yellow-400 hover:text-yellow-300">
+                      {t('refreshStats')}
+                    </button>
+                    <button onClick={() => fetchWineGlassStats(theme._id)} className="text-xs text-pink-400 hover:text-pink-300">
+                      🍷 {t('wineGlassRanking')}
+                    </button>
+                    {theme.status === 'open' && theme.settlementMode === 'random' && (
+                      <button
+                        onClick={() => handleRandomSettle(theme._id)}
+                        className="text-xs text-orange-400 hover:text-orange-300"
+                      >
+                        🎲 {t('randomSettle')}
+                      </button>
+                    )}
+                  </div>
+
+                  {wineGlassStats[theme._id] && wineGlassStats[theme._id].total > 0 && (
+                    <div className="bg-pink-950/30 rounded-xl border border-pink-800/30 p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-pink-400">🍷 {t('wineGlassRanking')}</span>
+                        <span className="text-xs text-pink-400/60">{t('total')}: {wineGlassStats[theme._id].total} {t('glasses')}</span>
+                      </div>
+                      {wineGlassStats[theme._id].stats.map((s, i) => (
+                        <div key={i} className="flex items-center justify-between text-sm py-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-pink-400/60 w-6">{i + 1}.</span>
+                            <span className="text-yellow-50">{s.name}</span>
+                          </div>
+                          <span className="text-pink-400 font-semibold">🍷 {s.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    {theme.options.map(opt => {
+                      const stat = themeStats[theme._id]?.stats?.find((s: any) => s.optionId === opt._id);
+                      const isWinner = theme.winnerOptionId === opt._id;
+                      return (
+                        <div key={opt._id} className={`flex items-center justify-between p-3 rounded-xl ${
+                          isWinner ? 'bg-green-500/20 border border-green-500/50' : 'bg-red-900/30'
+                        }`}>
+                          <div>
+                            <span className="text-sm">{opt.name}</span>
+                            {stat && (
+                              <span className="text-xs text-red-300/60 ml-2">
+                                {stat.betCount}{t('persons')} / {(stat.totalAmount / 10000).toFixed(0)}{t('wan')} / {stat.winRate}%
+                              </span>
+                            )}
+                            {isWinner && <span className="text-green-400 text-xs ml-2">&#10003; {t('winner')}</span>}
+                          </div>
+                          {theme.status === 'open' && theme.settlementMode === 'admin' && (
+                            <button
+                              onClick={() => handleSettle(theme._id, opt._id)}
+                              className="px-3 py-1 text-xs rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30"
+                            >
+                              {t('selectWinner')}
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
           ))}
         </>

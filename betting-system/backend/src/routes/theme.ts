@@ -49,6 +49,34 @@ router.post('/', auth, adminOnly, async (req: AuthRequest, res: Response) => {
   }
 });
 
+// PUT /api/themes/:id - 修改主题标题和选项（管理员）
+router.put('/:id', auth, adminOnly, async (req: AuthRequest, res: Response) => {
+  try {
+    const theme = await Theme.findById(req.params.id);
+    if (!theme) return res.status(404).json({ message: '主题不存在' });
+
+    const { title, description, options } = req.body;
+    if (title !== undefined) theme.title = title;
+    if (description !== undefined) theme.description = description;
+    if (options && Array.isArray(options)) {
+      // 更新现有选项的名称，支持新增选项
+      theme.options = options.map((opt: any) => {
+        if (opt._id) {
+          // 保留原有 _id
+          return { _id: opt._id, name: opt.name };
+        }
+        return { name: opt.name };
+      });
+    }
+
+    await theme.save();
+    (req as any).io?.emit('themeUpdate');
+    return res.json(theme);
+  } catch {
+    return res.status(500).json({ message: '服务器错误' });
+  }
+});
+
 // POST /api/themes/:id/start - 开始主题（pending → open）
 router.post('/:id/start', auth, adminOnly, async (req: AuthRequest, res: Response) => {
   try {
