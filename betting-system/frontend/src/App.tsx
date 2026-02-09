@@ -35,6 +35,7 @@ export default function App() {
   const [lang, setLangState] = useState(getLang());
   const [settings, setSettings] = useState<Settings | null>(null);
   const [showRules, setShowRules] = useState(false);
+  const [homeKey, setHomeKey] = useState(0);
 
   useEffect(() => {
     return onLangChange(() => setLangState(getLang()));
@@ -174,7 +175,7 @@ export default function App() {
         ) : page === 'leaderboard' ? (
           <LeaderboardPage />
         ) : (
-          <HomePage user={user} updateUser={updateUser} settings={settings} />
+          <HomePage user={user} updateUser={updateUser} settings={settings} refreshKey={homeKey} />
         )}
       </main>
 
@@ -188,7 +189,7 @@ export default function App() {
           <div className="bg-gradient-to-r from-red-950/98 via-red-900/98 to-red-950/98 backdrop-blur-md shadow-[0_-4px_20px_rgba(0,0,0,0.3)]">
             <div className="max-w-lg mx-auto flex gap-3 px-4 py-2.5">
               <button
-                onClick={() => setPage('home')}
+                onClick={() => { setPage('home'); setHomeKey((k: number) => k + 1); }}
                 className={`flex-1 py-3 rounded-xl text-center text-base font-bold transition-all active:scale-95 ${
                   page === 'home'
                     ? 'text-yellow-200 bg-gradient-to-r from-yellow-600/25 via-yellow-500/15 to-yellow-600/25 border border-yellow-500/40 shadow-md shadow-yellow-900/20'

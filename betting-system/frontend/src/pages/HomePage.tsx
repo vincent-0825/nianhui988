@@ -50,11 +50,12 @@ interface Props {
   user: User;
   updateUser: (partial: Partial<User>) => void;
   settings: Settings | null;
+  refreshKey?: number;
 }
 
 const STEP = 50000; // 5万为最小单位
 
-export default function HomePage({ user, updateUser, settings }: Props) {
+export default function HomePage({ user, updateUser, settings, refreshKey }: Props) {
   const [themes, setThemes] = useState<Theme[]>([]);
   const [expandedTheme, setExpandedTheme] = useState<string | null>(null);
   const [stats, setStats] = useState<Record<string, { stats: OptionStat[]; totalAmount: number; myBet: any }>>({});
@@ -127,6 +128,19 @@ export default function HomePage({ user, updateUser, settings }: Props) {
       socket.off('gameOver');
     };
   }, [fetchStats, fetchAllStats, refreshProfile]);
+
+  // 切换回押注页时刷新数据
+  useEffect(() => {
+    if (refreshKey === undefined || refreshKey === 0) return;
+    (async () => {
+      try {
+        const res = await getThemes();
+        setThemes(res.data);
+        if (res.data.length > 0) fetchAllStats(res.data);
+      } catch { /* ignore */ }
+    })();
+    refreshProfile();
+  }, [refreshKey, fetchAllStats, refreshProfile]);
 
   useEffect(() => {
     if (expandedTheme) fetchStats(expandedTheme);
