@@ -240,7 +240,7 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
 
   const tabClass = (active: boolean) =>
     `flex-1 py-2 rounded-xl text-sm font-semibold transition-all ${
-      active ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white' : 'bg-indigo-800/40 text-indigo-300'
+      active ? 'bg-gradient-to-r from-red-700 to-red-600 text-white' : 'bg-red-900/40 text-red-300/60'
     }`;
 
   return (
@@ -262,28 +262,28 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
       {tab === 'themes' && (
         <>
           {/* 创建主题 */}
-          <div className="bg-indigo-900/40 rounded-2xl border border-indigo-700/40 p-5 space-y-3">
-            <h3 className="font-semibold text-purple-300">{t('createTheme')}</h3>
+          <div className="bg-red-950/40 rounded-2xl border border-yellow-800/30 p-5 space-y-3">
+            <h3 className="font-semibold text-yellow-300">{t('createTheme')}</h3>
             <input
               placeholder={t('themeTitlePlaceholder')}
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl bg-indigo-800/50 border border-indigo-600/50 text-white placeholder-indigo-500 focus:outline-none focus:border-purple-500 text-sm"
+              className="w-full px-3 py-2.5 rounded-xl bg-red-900/40 border border-yellow-700/30 text-white placeholder-red-400/40 focus:outline-none focus:border-yellow-500 text-sm"
             />
             <input
               placeholder={t('description')}
               value={newDesc}
               onChange={(e) => setNewDesc(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl bg-indigo-800/50 border border-indigo-600/50 text-white placeholder-indigo-500 focus:outline-none focus:border-purple-500 text-sm"
+              className="w-full px-3 py-2.5 rounded-xl bg-red-900/40 border border-yellow-700/30 text-white placeholder-red-400/40 focus:outline-none focus:border-yellow-500 text-sm"
             />
 
             {/* 开奖方式 */}
             <div className="flex gap-2 items-center">
-              <span className="text-xs text-indigo-400">{t('settlementMode')}:</span>
+              <span className="text-xs text-red-300/60">{t('settlementMode')}:</span>
               <button
                 onClick={() => setNewMode('admin')}
                 className={`px-3 py-1 text-xs rounded-full ${
-                  newMode === 'admin' ? 'bg-purple-600 text-white' : 'bg-indigo-800/50 text-indigo-400'
+                  newMode === 'admin' ? 'bg-red-700 text-white' : 'bg-red-900/40 text-red-300/60'
                 }`}
               >
                 {t('adminPick')}
@@ -291,7 +291,7 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
               <button
                 onClick={() => setNewMode('random')}
                 className={`px-3 py-1 text-xs rounded-full ${
-                  newMode === 'random' ? 'bg-blue-600 text-white' : 'bg-indigo-800/50 text-indigo-400'
+                  newMode === 'random' ? 'bg-yellow-700 text-white' : 'bg-red-900/40 text-red-300/60'
                 }`}
               >
                 🎲 {t('systemRandom')}
@@ -299,7 +299,7 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
             </div>
 
             <div className="space-y-2">
-              <p className="text-xs text-indigo-400">{t('options')}:</p>
+              <p className="text-xs text-red-300/60">{t('options')}:</p>
               {newOptions.map((opt, i) => (
                 <div key={i} className="flex gap-2">
                   <input
@@ -310,21 +310,21 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
                       copy[i] = e.target.value;
                       setNewOptions(copy);
                     }}
-                    className="flex-1 px-3 py-2 rounded-xl bg-indigo-800/50 border border-indigo-600/50 text-white placeholder-indigo-500 focus:outline-none focus:border-purple-500 text-sm"
+                    className="flex-1 px-3 py-2 rounded-xl bg-red-900/40 border border-yellow-700/30 text-white placeholder-red-400/40 focus:outline-none focus:border-yellow-500 text-sm"
                   />
                   {newOptions.length > 2 && (
                     <button onClick={() => removeOption(i)} className="text-red-400 text-sm px-2">✕</button>
                   )}
                 </div>
               ))}
-              <button onClick={addOption} className="text-sm text-blue-400 hover:text-blue-300">
+              <button onClick={addOption} className="text-sm text-yellow-400 hover:text-yellow-300">
                 {t('addOption')}
               </button>
             </div>
             <button
               onClick={handleCreateTheme}
               disabled={loading}
-              className="w-full py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 active:scale-95 text-sm disabled:opacity-50"
+              className="w-full py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-red-700 to-red-600 hover:from-red-600 hover:to-red-500 active:scale-95 text-sm disabled:opacity-50"
             >
               {loading ? t('loading') : t('create')}
             </button>
@@ -332,7 +332,7 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
 
           {/* 主题列表 */}
           {themes.map(theme => (
-            <div key={theme._id} className="bg-indigo-900/40 rounded-2xl border border-indigo-700/40 p-5 space-y-3">
+            <div key={theme._id} className="bg-red-950/40 rounded-2xl border border-yellow-800/30 p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className={`text-xs px-2 py-0.5 rounded-full ${
@@ -340,7 +340,7 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
                   }`}>
                     {theme.status === 'closed' ? t('ended') : t('ongoing')}
                   </span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-800/50 text-indigo-400">
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-red-900/40 text-red-300/60">
                     {theme.settlementMode === 'random' ? `🎲 ${t('systemRandom')}` : t('adminPick')}
                   </span>
                   <h4 className="font-semibold">{theme.title}</h4>
@@ -351,7 +351,7 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
               </div>
 
               <div className="flex gap-2">
-                <button onClick={() => fetchThemeStats(theme._id)} className="text-xs text-blue-400 hover:text-blue-300">
+                <button onClick={() => fetchThemeStats(theme._id)} className="text-xs text-yellow-400 hover:text-yellow-300">
                   {t('refreshStats')}
                 </button>
                 {theme.status === 'open' && theme.settlementMode === 'random' && (
@@ -371,12 +371,12 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
                   const isWinner = theme.winnerOptionId === opt._id;
                   return (
                     <div key={opt._id} className={`flex items-center justify-between p-3 rounded-xl ${
-                      isWinner ? 'bg-green-500/20 border border-green-500/50' : 'bg-indigo-800/30'
+                      isWinner ? 'bg-green-500/20 border border-green-500/50' : 'bg-red-900/30'
                     }`}>
                       <div>
                         <span className="text-sm">{opt.name}</span>
                         {stat && (
-                          <span className="text-xs text-indigo-400 ml-2">
+                          <span className="text-xs text-red-300/60 ml-2">
                             {stat.betCount}{t('persons')} / {(stat.totalAmount / 10000).toFixed(0)}{t('wan')} / {stat.winRate}%
                           </span>
                         )}
@@ -402,11 +402,11 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
       {/* ========== 用户管理 ========== */}
       {tab === 'users' && (
         <div className="space-y-3">
-          <div className="text-sm text-indigo-400 px-1">
+          <div className="text-sm text-red-300/60 px-1">
             {t('totalUsers').replace('{count}', String(users.length))}
           </div>
           {users.map(u => (
-            <div key={u._id} className="bg-indigo-900/40 rounded-2xl border border-indigo-700/40 p-4">
+            <div key={u._id} className="bg-red-950/40 rounded-2xl border border-yellow-800/30 p-4">
               <div className="flex items-center gap-3">
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">{u.name}</p>
@@ -415,7 +415,7 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
                     {u.wineGlasses > 0 && (
                       <span className="text-pink-400">🍷 {u.wineGlasses}</span>
                     )}
-                    <span className="text-indigo-400">{t('rounds')}: {u.rounds}</span>
+                    <span className="text-red-300/60">{t('rounds')}: {u.rounds}</span>
                   </div>
                 </div>
                 <input
@@ -425,7 +425,7 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
                   onChange={(e) => setCoinAmounts(prev => ({
                     ...prev, [u._id]: parseInt(e.target.value) || 0
                   }))}
-                  className="w-24 px-2 py-1.5 rounded-lg bg-indigo-800/50 border border-indigo-600/50 text-white text-sm focus:outline-none focus:border-purple-500"
+                  className="w-24 px-2 py-1.5 rounded-lg bg-red-900/40 border border-yellow-700/30 text-white text-sm focus:outline-none focus:border-yellow-500"
                 />
                 <button
                   onClick={() => handleGiveCoins(u._id)}
@@ -441,13 +441,13 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
 
       {/* ========== 系统设置 ========== */}
       {tab === 'settings' && (
-        <div className="bg-indigo-900/40 rounded-2xl border border-indigo-700/40 p-5 space-y-4">
-          <h3 className="font-semibold text-purple-300">{t('systemSettings')}</h3>
+        <div className="bg-red-950/40 rounded-2xl border border-yellow-800/30 p-5 space-y-4">
+          <h3 className="font-semibold text-yellow-300">{t('systemSettings')}</h3>
 
           {settings && (
-            <div className="p-3 rounded-xl bg-indigo-800/30 text-sm space-y-1">
+            <div className="p-3 rounded-xl bg-red-900/30 text-sm space-y-1">
               <div className="flex justify-between">
-                <span className="text-indigo-400">{t('currentPool')}:</span>
+                <span className="text-red-300/60">{t('currentPool')}:</span>
                 <span className={`font-semibold ${settings.gameOver ? 'text-red-400' : 'text-green-400'}`}>
                   {(settings.currentPool / 10000).toFixed(0)}{t('wan')}
                   {settings.gameOver && ` (${t('gameOver').split('!')[0]})`}
@@ -458,47 +458,47 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
 
           <div className="space-y-3">
             <div>
-              <label className="text-xs text-indigo-400 mb-1 block">{t('initialCoins')} ({t('wan')})</label>
+              <label className="text-xs text-red-300/60 mb-1 block">{t('initialCoins')} ({t('wan')})</label>
               <input
                 type="number"
                 value={editSettings.initialCoins / 10000}
                 onChange={(e) => setEditSettings(prev => ({
                   ...prev, initialCoins: (parseFloat(e.target.value) || 0) * 10000
                 }))}
-                className="w-full px-3 py-2 rounded-xl bg-indigo-800/50 border border-indigo-600/50 text-white focus:outline-none focus:border-purple-500 text-sm"
+                className="w-full px-3 py-2 rounded-xl bg-red-900/40 border border-yellow-700/30 text-white focus:outline-none focus:border-yellow-500 text-sm"
               />
             </div>
             <div>
-              <label className="text-xs text-indigo-400 mb-1 block">{t('minBetAmount')} ({t('wan')})</label>
+              <label className="text-xs text-red-300/60 mb-1 block">{t('minBetAmount')} ({t('wan')})</label>
               <input
                 type="number"
                 value={editSettings.minBet / 10000}
                 onChange={(e) => setEditSettings(prev => ({
                   ...prev, minBet: (parseFloat(e.target.value) || 0) * 10000
                 }))}
-                className="w-full px-3 py-2 rounded-xl bg-indigo-800/50 border border-indigo-600/50 text-white focus:outline-none focus:border-purple-500 text-sm"
+                className="w-full px-3 py-2 rounded-xl bg-red-900/40 border border-yellow-700/30 text-white focus:outline-none focus:border-yellow-500 text-sm"
               />
             </div>
             <div>
-              <label className="text-xs text-indigo-400 mb-1 block">{t('maxBetAmount')} ({t('wan')})</label>
+              <label className="text-xs text-red-300/60 mb-1 block">{t('maxBetAmount')} ({t('wan')})</label>
               <input
                 type="number"
                 value={editSettings.maxBet / 10000}
                 onChange={(e) => setEditSettings(prev => ({
                   ...prev, maxBet: (parseFloat(e.target.value) || 0) * 10000
                 }))}
-                className="w-full px-3 py-2 rounded-xl bg-indigo-800/50 border border-indigo-600/50 text-white focus:outline-none focus:border-purple-500 text-sm"
+                className="w-full px-3 py-2 rounded-xl bg-red-900/40 border border-yellow-700/30 text-white focus:outline-none focus:border-yellow-500 text-sm"
               />
             </div>
             <div>
-              <label className="text-xs text-indigo-400 mb-1 block">{t('totalPrizePool')} ({t('wan')})</label>
+              <label className="text-xs text-red-300/60 mb-1 block">{t('totalPrizePool')} ({t('wan')})</label>
               <input
                 type="number"
                 value={editSettings.totalPrizePool / 10000}
                 onChange={(e) => setEditSettings(prev => ({
                   ...prev, totalPrizePool: (parseFloat(e.target.value) || 0) * 10000
                 }))}
-                className="w-full px-3 py-2 rounded-xl bg-indigo-800/50 border border-indigo-600/50 text-white focus:outline-none focus:border-purple-500 text-sm"
+                className="w-full px-3 py-2 rounded-xl bg-red-900/40 border border-yellow-700/30 text-white focus:outline-none focus:border-yellow-500 text-sm"
               />
             </div>
           </div>
@@ -506,7 +506,7 @@ export default function AdminPage({ settings, onSettingsChange }: Props) {
           <div className="flex gap-2">
             <button
               onClick={handleSaveSettings}
-              className="flex-1 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 active:scale-95 text-sm"
+              className="flex-1 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-red-700 to-red-600 hover:from-red-600 hover:to-red-500 active:scale-95 text-sm"
             >
               {t('save')}
             </button>

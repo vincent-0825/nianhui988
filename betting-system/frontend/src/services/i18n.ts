@@ -90,6 +90,13 @@ const zh = {
   saveFail: '保存失败',
   resetPool: '重置奖池',
   wan: '万',
+  leaderboard: '排行榜',
+  rank: '排名',
+  proportion: '占比',
+  estimatedPrize: '预估奖金',
+  noUsers: '暂无数据',
+  springGreeting: '马年新春快乐',
+  totalCoinsAll: '全员金币总额',
 };
 
 const en: typeof zh = {
@@ -179,6 +186,13 @@ const en: typeof zh = {
   saveFail: 'Save failed',
   resetPool: 'Reset Pool',
   wan: '0K',
+  leaderboard: 'Leaderboard',
+  rank: 'Rank',
+  proportion: 'Share',
+  estimatedPrize: 'Est. Prize',
+  noUsers: 'No data',
+  springGreeting: 'Happy Year of the Horse',
+  totalCoinsAll: 'Total Coins',
 };
 
 const translations = { zh, en } as const;
