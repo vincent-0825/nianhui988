@@ -72,13 +72,6 @@ export default function HomePage({ user, updateUser, settings }: Props) {
     selectTimer.current = setTimeout(() => setJustSelected(null), 450);
   };
 
-  const fetchThemes = useCallback(async () => {
-    try {
-      const res = await getThemes();
-      setThemes(res.data);
-    } catch { /* ignore */ }
-  }, []);
-
   const fetchStats = useCallback(async (themeId: string) => {
     try {
       const res = await getThemeBets(themeId);
@@ -93,12 +86,39 @@ export default function HomePage({ user, updateUser, settings }: Props) {
     } catch { /* ignore */ }
   }, [updateUser]);
 
-  useEffect(() => { fetchThemes(); }, [fetchThemes]);
+  // 加载所有主题的押注统计（用于状态标签显示）
+  const fetchAllStats = useCallback(async (themeList: Theme[]) => {
+    try {
+      const results = await Promise.all(themeList.map(t => getThemeBets(t._id)));
+      const newStats: Record<string, any> = {};
+      themeList.forEach((t, i) => { newStats[t._id] = results[i].data; });
+      setStats(newStats);
+    } catch { /* ignore */ }
+  }, []);
 
   useEffect(() => {
-    socket.on('themeUpdate', fetchThemes);
+    (async () => {
+      try {
+        const res = await getThemes();
+        setThemes(res.data);
+        if (res.data.length > 0) fetchAllStats(res.data);
+      } catch { /* ignore */ }
+    })();
+    // 登录后立即刷新 profile，防止 localStorage 中金币数据过期
+    refreshProfile();
+  }, [fetchAllStats, refreshProfile]);
+
+  useEffect(() => {
+    const handleThemeUpdate = async () => {
+      try {
+        const res = await getThemes();
+        setThemes(res.data);
+        if (res.data.length > 0) fetchAllStats(res.data);
+      } catch { /* ignore */ }
+    };
+    socket.on('themeUpdate', handleThemeUpdate);
     socket.on('betUpdate', (data: { themeId: string }) => fetchStats(data.themeId));
-    socket.on('settled', () => { fetchThemes(); refreshProfile(); });
+    socket.on('settled', () => { handleThemeUpdate(); refreshProfile(); });
     socket.on('gameOver', () => toast.error(t('gameOver')));
     return () => {
       socket.off('themeUpdate');
@@ -106,7 +126,7 @@ export default function HomePage({ user, updateUser, settings }: Props) {
       socket.off('settled');
       socket.off('gameOver');
     };
-  }, [fetchThemes, fetchStats, refreshProfile]);
+  }, [fetchStats, fetchAllStats, refreshProfile]);
 
   useEffect(() => {
     if (expandedTheme) fetchStats(expandedTheme);
